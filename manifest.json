@@ -1,0 +1,21 @@
+{
+    "manifest_version": 3,
+    "name": "Simplify Power Tools",
+    "version": "1.0",
+    "description": "Adds Power Tools to Simplify",
+    "icons": {
+        "16": "images/FinPowerTool-16.png",
+        "32": "images/FinPowerTool-32.png",
+        "48": "images/FinPowerTool-48.png",
+        "128": "images/FinPowerTool-128.png"
+      },
+    "content_scripts": [
+        {
+          "js": ["scripts/content.js"],
+          "matches": [
+            "https://app.simplifimoney.com/*"
+          ],
+          "run_at": "document_idle"
+        }
+      ]
+  }
