@@ -138,20 +138,19 @@ class TransactionModel{
 class Calculator {
 
   showSimplifiInputBox(){
-    this.simplifiInputContainerNode.style.display='block';
+    //this.simplifiInputContainerNode.style.display='block';
   }
 
   hideSimplifiInputBox(){
-    this.simplifiInputContainerNode.style.display='none'
+    //this.simplifiInputContainerNode.style.display='none'
   }
 
   showPowerToolInputBox(){
-    this.powerToolCalcContainerNode.style.display='block';
+    //this.powerToolCalcContainerNode.style.display='block';
   }
 
   hidePowerToolInputBox(){
-    this.powerToolCalcContainerNode.style.display='none';
-    //this.powerToolCalcContainerNode.parentNode.removeChild(this.powerToolCalcContainerNode);
+    //this.powerToolCalcContainerNode.style.display='none';
   }
 
   setFocusOnPowerToolBox(){
@@ -271,6 +270,33 @@ class Calculator {
     }
   }
 
+  setCalcDirectionAndReturnValue(value){
+    //todo: this is not working when value does not start with a + and instead is blank
+    // need to understand what default really means
+    if(this.calcDirection === '+'){
+      if(value >= 0 ){
+        return value
+      }else if ( value < 0){
+        this.calcDirection = "";
+        return value;
+      }
+    }else if (this.calcDirection === '-'){
+      if(value >= 0 ){
+        this.calcDirection = "";
+        return value * -1;
+      }else if ( value < 0){
+        return value;
+      }
+    }else if (this.calcDirection === ""){
+      if(value > 0 ){
+        return value ;
+      }else if ( value < 0){
+        this.calcDirection = "-";
+        return value * -1;
+      }
+    }
+  }
+
   setDefaultCalcDirection(value){
     switch(value[0]){
       case '+':
@@ -282,6 +308,7 @@ class Calculator {
       default:
           this.calcDirection = ''
     }
+    this.CalcDirectionLabel.textContent  = this.calcDirection;
   }
 
 
@@ -300,9 +327,9 @@ class Calculator {
       let roundedValue = parseFloat(calcValue.toFixed(6));
       console.log('Rounded Value: ' + roundedValue);
       returnvalue = roundedValue
-      let signedValue = this.getCalcDirectionIndicator(returnvalue) + returnvalue
-      console.log('Signed Value : ' + signedValue);
-      returnvalue = signedValue;
+      let calcDirectedValue = this.setCalcDirectionAndReturnValue(returnvalue)
+      console.log('Signed Value : ' + this.calcDirection + calcDirectedValue);
+      returnvalue = calcDirectedValue;
 
     }catch(exception){
       returnvalue = this.powerToolCalcInputNode.value
@@ -328,7 +355,7 @@ class Calculator {
       //this.simplifyInputNode.dispatchEvent(new Event('blur', { bubbles: true, cancelable: false })); //lr.splitsHelpers.adjustSplitLine
       this.hidePowerToolInputBox()
       this.showSimplifiInputBox();
-      this.setDefaultCalcDirection(this.powerToolCalcInputNode.value);
+      //this.setDefaultCalcDirection(this.powerToolCalcInputNode.value);
       if(event.relatedTarget !== null){
         console.log("Loss Handler redirecting focus to " + event.relatedTarget);
         this.ForceSimplifiRecalcThenRedirect(event.relatedTarget);
@@ -374,8 +401,14 @@ class Calculator {
 
     this.powerToolCalcInputLabel = this.powerToolCalcContainerNode.querySelector('label');
     this.powerToolCalcInputLabel.textContent = "Power Tool Calc" 
-    //this.powerToolCalcInputLabel.addAttribute("associated-amount");
     this.powerToolCalcInputLabel.setAttribute("associated-amount",this.simplifiQAmountFieldNodeID);
+
+    this.CalcDirectionLabel = document.createElement("label");
+    this.CalcDirectionLabel.style.display = "inline";
+    this.CalcDirectionLabel.textContent = ""
+
+    //this.powerToolCalcInputLabel.addAttribute("associated-amount");
+    
    
     // this is not workng presently
     if (this.powerToolCalcInputNode.hasAttribute("sharedcomponentid")) {
@@ -391,6 +424,7 @@ class Calculator {
     let oldNode = this.powerToolCalcContainerNode.querySelector('input[type="text"]'); // find text field and replace it with new input field
     this.powerToolCalcInputNode.className = oldNode.className;
     oldNode.parentNode.replaceChild(this.powerToolCalcInputNode, oldNode);
+    this.powerToolCalcInputNode.insertAdjacentElement('beforebegin', this.CalcDirectionLabel);
     //this.powerToolCalcInputNode.type = 'text';
     //this.powerToolCalcInputNode.style.cssText = `width: 100px; height: 50px; position: absolute; background-color: red; z-index: ${ parseInt(window.getComputedStyle(this.transactionModel.parentNode.parentNode).getPropertyValue('z-index'))}`;
     //this.powerToolCalcInputNode.style.cssText = `z-index: ${ parseInt(window.getComputedStyle(this.transactionModel.parentNode.parentNode).getPropertyValue('z-index'))}`;
@@ -441,6 +475,7 @@ class Calculator {
       this.simplifiQAmountFieldNodeID = amountFieldKeyGenerator(simplifiQAmountFieldNode);
       this.buildCalcNodeAndAttachListeners();
       this.setDefaultCalcDirection(this.simplifiInputNode.value[0]);
+      
     }
 }
 
