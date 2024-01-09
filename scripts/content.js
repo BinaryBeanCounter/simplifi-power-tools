@@ -2,10 +2,6 @@ const CalcButtonPrefix = "PowerToolsCalcButton-";
 const CalcIDBaseName = "PowerToolsCalc";
 const svgNS = "http://www.w3.org/2000/svg";
 
-// const mathScript = document.createElement('script');
-// mathScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mathjs/10.6.4/math.js';
-// document.head.appendChild(mathScript);
-
 class PowerToolApps{
  
   setupTransactionObserver(){
