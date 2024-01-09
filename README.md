@@ -4,7 +4,7 @@ simplifi-power-tools is a chrome extension for the Simplifi Personal Finance Too
 
 ## Installation
 
-This is a BETA extension is must be installed manually
+This is a BETA extension it must be installed manually
 Standard Chrome Extension via chrome://extensions/
 * clone repo to local desktop
 * goto chrome://extensions/
