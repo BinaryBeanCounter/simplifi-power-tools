@@ -11,7 +11,7 @@
       },
     "content_scripts": [
         {
-          "js": ["scripts/content.js"],
+          "js": ["bundle.js"],
           "matches": [
             "https://app.simplifimoney.com/*"
           ],
