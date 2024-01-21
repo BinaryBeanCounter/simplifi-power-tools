@@ -123,7 +123,7 @@ class TransactionModel{
   constructor (transactionDetailHeader, parent){
     this.parent = parent;
     this.parentModel = transactionDetailHeader.parentNode;
-    this.detailPane = transactionDetailHeader.parentNode.querySelector(`css-4rizef-root`);
+    this.detailPane = transactionDetailHeader.parentNode.querySelector(`.css-4rizef-root`);
     console.log("Detail Root Pane Found id =" + this.detailPane.id + "  node: " + this.detailPane.cloneNode(false).outerHTML);
     this.calculatorMap = new Map();
     this.addCalculators(this.parentModel);
