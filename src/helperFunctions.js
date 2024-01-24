@@ -4,7 +4,7 @@ export function amountFieldKeyGenerator(QAmountField){
   }
   
  function getImmediateTextOnly(childNodes){
-    return immediateTextContent = Array.from(childNodes).filter(function(node) {
+    return Array.from(childNodes).filter(function(node) {
       return node.nodeType === 3; // Text node type
     }).map(function(textNode) {
       return textNode.nodeValue.trim();
@@ -12,8 +12,8 @@ export function amountFieldKeyGenerator(QAmountField){
   } 
   
   export function findFirst(rootnode, selector, targetText) {
-    var elements = rootnode.querySelectorAll(selector);
-    return targetDiv = Array.from(elements).find(function(div) {
+    let elements = rootnode.querySelectorAll(selector);
+    return Array.from(elements).find(function(div) {
       let immediatetext = getImmediateTextOnly(div.childNodes);
       return immediatetext===targetText;
     });
