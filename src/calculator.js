@@ -1,4 +1,5 @@
 import {amountFieldKeyGenerator, findFirst} from './helperFunctions';
+import {DoMath} from './math';
 
 const CalcButtonPrefix = "PowerToolsCalcButton-";
 const CalcIDBaseName = "PowerToolsCalc";
