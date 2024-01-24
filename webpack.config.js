@@ -1,5 +1,6 @@
 const path = require('path');
 const CopyPlugin = require('copy-webpack-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = {
   mode: 'production', // or 'production' or 'development'
@@ -25,5 +26,6 @@ module.exports = {
     new CopyPlugin({
       patterns: [{ from: 'static' }],
     }),
+    new BundleAnalyzerPlugin(),
   ],
 };
