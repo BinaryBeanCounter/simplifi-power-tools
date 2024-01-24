@@ -32,8 +32,8 @@ export class TransactionModel{
       for (const mutation of mutationList) {
         if(mutation.addedNodes.length > 0){
           mutation.addedNodes.forEach( (element) => {
-            console.log("added id =" + element.id + "  node: " + element.cloneNode(false).outerHTML);
-            if(element.getAttribute('class').includes('-catRow')){
+            console.log("added id =" + element?.id + "  node: " + element.cloneNode(false).outerHTML);
+            if(element?.getAttribute('class')?.includes('-catRow')){
               let AmountNode = element.querySelector('[sharedcomponentid="QAmountField"]');
               console.log("QAmountField Detected id =" + AmountNode.id + "  node: " + AmountNode.cloneNode(false).outerHTML);
               if(!this.checkIfCalculatorExists(AmountNode)){
@@ -44,8 +44,8 @@ export class TransactionModel{
         }
         if(mutation.removedNodes.length > 0){
           mutation.removedNodes.forEach( (element) => {
-            console.log("removed id =" + element.id + "  node: " + element.cloneNode(false).outerHTML);
-            if(element.getAttribute('class').includes('-catRow')){
+            console.log("removed id =" + element?.id + "  node: " + element.cloneNode(false).outerHTML);
+            if(element?.getAttribute('class')?.includes('-catRow')){
               console.log("cat remove removed id =" + element.id + "  node: " + element.cloneNode(false).outerHTML);
               // todo: I think i need to detach all of these nodes from the dom and recreate them in case you are on a amount field and directly click the garbage icon
               for( let [key,value] of this.calculatorMap.entries()){
