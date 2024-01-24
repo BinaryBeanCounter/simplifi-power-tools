@@ -459,7 +459,7 @@ class TransactionModel{
     }
   
     setupSplitObserver(detailPaneRoot){
-      this.config = { attributes: false, childList: true, subtree: false };
+      this.config = { attributes: false, childList: true, subtree: true };
       this.observer = new MutationObserver((mutationList, observer) => this.detailPaneMutuationCallBack(mutationList, observer));
       this.observer.observe(detailPaneRoot, this.config);
     }
