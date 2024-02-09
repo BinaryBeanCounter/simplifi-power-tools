@@ -1,5 +1,6 @@
 import {amountFieldKeyGenerator, findFirst} from './helperFunctions';
 import {DoMath} from './math';
+import './style.css';
 
 const CalcButtonPrefix = "PowerToolsCalcButton-";
 const CalcIDBaseName = "PowerToolsCalc";
@@ -244,6 +245,7 @@ export class Calculator {
   
       this.powerToolCalcInputLabel = this.powerToolCalcContainerNode.querySelector('label');
       this.powerToolCalcInputLabel.textContent = "Power Tool Calc" 
+      this.powerToolCalcInputLabel.classList.add('hello');
       //this.powerToolCalcInputLabel.addAttribute("associated-amount");
       this.powerToolCalcInputLabel.setAttribute("associated-amount",this.simplifiQAmountFieldNodeID);
      
