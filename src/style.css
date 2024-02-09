@@ -1,0 +1,11 @@
+.hello {
+    color: red;
+  }
+
+  .powerToolActivateCalcButton {
+    display: flex;
+    background-color: transparent;
+    box-shadow: none;
+    border: none;
+    outline: none;
+}

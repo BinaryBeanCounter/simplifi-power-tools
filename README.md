@@ -2,6 +2,12 @@
 
 simplifi-power-tools is a chrome extension for the Simplifi Personal Finance Tool.
 
+## Functionality
+
+A basic calculator that is added to each of the fields in the split screen.
+
+![Demo of power tool calculator working](/demo/PowerToolDemo.gif)
+
 ## Installation
 
 This is a BETA extension it must be installed manually
@@ -13,10 +19,6 @@ Standard Chrome Extension via chrome://extensions/
 * point to root of folder where manifest.json is located
 * Login to simplify and go to a split transaction a small calculator icon should show in each amount field
 * clicking in any field should switch to power tool calculator field and allow math operations in field (15+5 -> enter -> result 20 in field)
-
-## Functionality
-
-A basic calculator that is added to each of the fields in the split screen.
 
 ## Future Goals
 
