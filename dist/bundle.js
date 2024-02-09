@@ -19,7 +19,15 @@ var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBP
 // Module
 ___CSS_LOADER_EXPORT___.push([module.id, `.hello {
     color: red;
-  }`, ""]);
+  }
+
+  .powerToolActivateCalcButton {
+    display: flex;
+    background-color: transparent;
+    box-shadow: none;
+    border: none;
+    outline: none;
+}`, ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
