@@ -214,11 +214,7 @@ export class Calculator {
       this.powerToolActivateCalcButtonContainer = document.createElement("div");
       this.powerToolActivateCalcButtonContainer.style.display ='flex';
       this.powerToolActivateCalcButton = document.createElement("button");
-      this.powerToolActivateCalcButton.style.display = 'flex';
-      this.powerToolActivateCalcButton.style.backgroundColor = 'transparent';
-      this.powerToolActivateCalcButton.style.boxShadow = 'none';
-      this.powerToolActivateCalcButton.style.border = 'none';
-      this.powerToolActivateCalcButton.style.outline = 'none';
+      this.powerToolActivateCalcButton.classList.add("powerToolActivateCalcButton");
       this.powerToolActivateCalcButtonSVG = document.createElementNS(svgNS,"svg");
       this.powerToolActivateCalcButtonSVGPath = document.createElementNS(svgNS,"path");
   
