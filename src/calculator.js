@@ -116,6 +116,8 @@ export class Calculator {
       // with the exception that we show positives with a leading + if we came into the calculator with a +
       if(value > 0 && (startingDirection === '+' || this.originalCalcDirection === '+')){
         return '+';
+      }else {
+        return '';
       }
     }
 
@@ -149,7 +151,11 @@ export class Calculator {
         }else if ( value < 0){
           let userInput = prompt("Is this an Expense Category? (yes/no)").toLowerCase();
           if(userInput ==="yes"){
-            value = value * -1;
+            console.log('value before sign flip: ' + value);
+            value = value * -1; // remove negative sign
+            console.log('value before sign append: ' + value);
+            value = '+' + value; // add positive sign
+            console.log('value after sign append: ' + value);
             return value;
           }else{
             return value;
@@ -231,7 +237,9 @@ export class Calculator {
       //if(event.target.id ='PowerToolsCalc-Input' and event.relatedTarget.) // redirect is not working
       if(event.relatedTarget === null || !event.relatedTarget.hasAttribute("id") || (event.relatedTarget.id !=='dlg-close')){
         this.runCalculator();
-        this.simplifiInputNode.value = this.getReturnTimeDirectionIndicator(this.powerToolCalcInputNode.value);
+        let externalOutputValue = this.getReturnTimeDirectionIndicator(this.powerToolCalcInputNode.value);
+        this.powerToolCalcInputNode.value = externalOutputValue;
+        this.simplifiInputNode.value = externalOutputValue;
         //this.simplifyInputNode.dispatchEvent(new Event('click', { bubbles: true }));
         //this.simplifyInputNode.dispatchEvent(new Event('focus', { bubbles: true }));
         this.simplifiInputNode.dispatchEvent(new Event('change', { bubbles: true })); // must dispatch change for value to commit on simplifi side
