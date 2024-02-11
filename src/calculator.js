@@ -232,10 +232,11 @@ export class Calculator {
     }
   
     powerToolInputNodelossFocusHandler(event) { 
-        //recalculate as long as close button is not clicked
-      // ensure no redirect against self on force recalc
-      //if(event.target.id ='PowerToolsCalc-Input' and event.relatedTarget.) // redirect is not working
-      if(event.relatedTarget === null || !event.relatedTarget.hasAttribute("id") || (event.relatedTarget.id !=='dlg-close')){
+      //recalculate as long as close button is not clicked
+    // ensure no redirect against self on force recalc
+    //if(event.target.id ='PowerToolsCalc-Input' and event.relatedTarget.) // redirect is not working
+    if(event.relatedTarget === null || !event.relatedTarget.hasAttribute("id") || (event.relatedTarget.id !=='dlg-close')){
+      setTimeout(() => {
         this.runCalculator();
         let externalOutputValue = this.getReturnTimeDirectionIndicator(this.powerToolCalcInputNode.value);
         this.powerToolCalcInputNode.value = externalOutputValue;
@@ -244,17 +245,19 @@ export class Calculator {
         //this.simplifyInputNode.dispatchEvent(new Event('focus', { bubbles: true }));
         this.simplifiInputNode.dispatchEvent(new Event('change', { bubbles: true })); // must dispatch change for value to commit on simplifi side
         //this.simplifyInputNode.dispatchEvent(new Event('blur', { bubbles: true, cancelable: false })); //lr.splitsHelpers.adjustSplitLine
-        this.hidePowerToolInputBox()
-        this.showSimplifiInputBox();
-        //this.setDefaultCalcDirection(this.powerToolCalcInputNode.value);
-        if(event.relatedTarget !== null){
-          console.log("Loss Handler redirecting focus to " + event.relatedTarget);
-          this.ForceSimplifiRecalcThenRedirect(event.relatedTarget);
-        }
+
+      }, 50);
+    
+      this.hidePowerToolInputBox()
+      this.showSimplifiInputBox();
+
+      //this.setDefaultCalcDirection(this.powerToolCalcInputNode.value);
+      if(event.relatedTarget !== null){
+        console.log("Loss Handler redirecting focus to " + event.relatedTarget);
+        this.ForceSimplifiRecalcThenRedirect(event.relatedTarget);
       }
-     
-      
     }
+  }
   
     buildCalcNodeAndAttachListeners(){
       //console.log("Input Text Found id =" + this.simplifiInputNode.id + "  node: " + this.simplifiInputNode.cloneNode(false).outerHTML);
