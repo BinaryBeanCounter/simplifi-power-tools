@@ -695,7 +695,6 @@ class Calculator {
       let lastChar = inputValue.slice(-1);
       if(lastChar === '\n'){
         this.runCalculator();
-        this.powerToolCalcInputNode.value = this.simplifiInputNode.value;
       }
     }
   
@@ -730,56 +729,97 @@ class Calculator {
       this.setFocusOnPowerToolBox();
     }
   
-    getCalcDirectionIndicator(value){
-      //todo: this is not working when value does not start with a + and instead is blank
-      // need to understand what default really means
-      if(this.calcDirection === '+'){
+    getCalcTimeDirectionIndicator(value, startingDirection){
+      //this handles what indicator we should use while calulating. in general it is logical with a normal calc
+      // with the exception that we show positives with a leading + if we came into the calculator with a +
+      if(value > 0 && (startingDirection === '+' || this.originalCalcDirection === '+')){
+        return '+';
+      }
+    }
+
+    getReturnTimeDirectionIndicator(value){
+      //todo: this handles when exiting the Power Tool Calculator back to Simplifi box
+      // we must handle calc directions to match simplifi expectations see wiki document on git hub to learn more
+      // https://github.com/BinaryBeanCounter/simplifi-power-tools/wiki/How-Does-Simplifi-Handle-(Minus-,-Plus-,-blank)-indicators-in-fields
+      
+      if(value.startsWith('+') ){
+        value = value.slice(1); // for + slice it off we will let the following function decide what is needed
+      }
+      if(this.originalCalcDirection === '+'){
         if(value > 0 ){
-          return this.calcDirection
+          return this.originalCalcDirection + value;
         }else if ( value < 0){
-          return '';
+          return value;
         }else {
-          return '';
+          return value;
         }
-      }else if (this.calcDirection === '-'){
+      }else if (this.originalCalcDirection === '-'){
         if(value > 0 ){
-          return '';
+          return value;
         }else if ( value < 0){
-          return '';
+          return value;
         }else {
-          return '';
+          return value;
         }
-      }else if (this.calcDirection === ""){
+      }else if (this.originalCalcDirection === ""){
         if(value > 0 ){
-          return '';
+          return value;
         }else if ( value < 0){
-          return '';
+          let userInput = prompt("Is this an Expense Category? (yes/no)").toLowerCase();
+          if(userInput ==="yes"){
+            value = value * -1;
+            return value;
+          }else{
+            return value;
+          }
         }else {
-          return '';
+          return value;
         }
       }
     }
   
-    setDefaultCalcDirection(value){
+    // setDefaultCalcDirection(value){
+    //   switch(value[0]){
+    //     case '+':
+    //       this.calcDirection = '+'
+    //         break;
+    //     case '-':
+    //       this.calcDirection = '-'
+    //       break;
+    //     default:
+    //         this.calcDirection = ''
+    //   }
+    // }
+
+    setOriginalCalcDirection(value){
       switch(value[0]){
         case '+':
-          this.calcDirection = '+'
+          this.originalCalcDirection = '+'
             break;
         case '-':
-          this.calcDirection = '-'
+          this.originalCalcDirection = '-'
           break;
         default:
-            this.calcDirection = ''
+            this.originalCalcDirection = ''
       }
     }
   
-  
+         // this could happen for a few reason
+        // 1) did we just enable the calculator and simplify passed us this (+ or -)
+        // 2) did we change calc directions while doing some math (-)
+        // for + the only way we get this is if simplifi passes it to us but for - we could calc into this 
     runCalculator(){
       let returnvalue = 0;
+      let startingDirection = '';
       try{
         let calcutionString = this.powerToolCalcInputNode.value;
+
         if(calcutionString.startsWith('+') ){
-          calcutionString = calcutionString.slice(1);
+          startingDirection =  '+';
+          calcutionString = calcutionString.slice(1); // for + slice it off we will put it back
+        } else if(calcutionString.startsWith('-')){
+          startingDirection =  '+';
+          // no need to strip negatives calculator will handle it
         }
         console.log('Calc String: ' + calcutionString);
         let cleanedCalcString = this.cleanValue(calcutionString);
@@ -789,15 +829,14 @@ class Calculator {
         let roundedValue = parseFloat(calcValue.toFixed(6));
         console.log('Rounded Value: ' + roundedValue);
         returnvalue = roundedValue
-        let signedValue = this.getCalcDirectionIndicator(returnvalue) + returnvalue
+        let signedValue = this.getCalcTimeDirectionIndicator(returnvalue, startingDirection) + returnvalue
         console.log('Signed Value : ' + signedValue);
         returnvalue = signedValue;
-  
       }catch(exception){
         returnvalue = this.powerToolCalcInputNode.value
         console.log("error Calculating: " + this.powerToolCalcInputNode.value + " error message " + exception.message);
       } 
-      this.simplifiInputNode.value =  returnvalue;
+      this.powerToolCalcInputNode.value = returnvalue;
     }
   
     cleanValue(expression){
@@ -810,14 +849,14 @@ class Calculator {
       //if(event.target.id ='PowerToolsCalc-Input' and event.relatedTarget.) // redirect is not working
       if(event.relatedTarget === null || !event.relatedTarget.hasAttribute("id") || (event.relatedTarget.id !=='dlg-close')){
         this.runCalculator();
-      
+        this.simplifiInputNode.value = this.getReturnTimeDirectionIndicator(this.powerToolCalcInputNode.value);
         //this.simplifyInputNode.dispatchEvent(new Event('click', { bubbles: true }));
         //this.simplifyInputNode.dispatchEvent(new Event('focus', { bubbles: true }));
         this.simplifiInputNode.dispatchEvent(new Event('change', { bubbles: true })); // must dispatch change for value to commit on simplifi side
         //this.simplifyInputNode.dispatchEvent(new Event('blur', { bubbles: true, cancelable: false })); //lr.splitsHelpers.adjustSplitLine
         this.hidePowerToolInputBox()
         this.showSimplifiInputBox();
-        this.setDefaultCalcDirection(this.powerToolCalcInputNode.value);
+        //this.setDefaultCalcDirection(this.powerToolCalcInputNode.value);
         if(event.relatedTarget !== null){
           console.log("Loss Handler redirecting focus to " + event.relatedTarget);
           this.ForceSimplifiRecalcThenRedirect(event.relatedTarget);
@@ -926,7 +965,8 @@ class Calculator {
         }
         this.simplifiQAmountFieldNodeID = amountFieldKeyGenerator(simplifiQAmountFieldNode);
         this.buildCalcNodeAndAttachListeners();
-        this.setDefaultCalcDirection(this.simplifiInputNode.value[0]);
+       // this.setDefaultCalcDirection(this.simplifiInputNode.value[0]);
+        this.setOriginalCalcDirection(this.simplifiInputNode.value[0]);
       }
   }
 ;// CONCATENATED MODULE: ./src/transactionModel.js
