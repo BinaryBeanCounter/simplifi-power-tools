@@ -854,11 +854,11 @@ class Calculator {
     // ensure no redirect against self on force recalc
     //if(event.target.id ='PowerToolsCalc-Input' and event.relatedTarget.) // redirect is not working
     if(event.relatedTarget === null || !event.relatedTarget.hasAttribute("id") || (event.relatedTarget.id !=='dlg-close')){
+      this.runCalculator();
+      let externalOutputValue = this.getReturnTimeDirectionIndicator(this.powerToolCalcInputNode.value);
+      this.powerToolCalcInputNode.value = externalOutputValue;
+      this.simplifiInputNode.value = externalOutputValue;
       setTimeout(() => {
-        this.runCalculator();
-        let externalOutputValue = this.getReturnTimeDirectionIndicator(this.powerToolCalcInputNode.value);
-        this.powerToolCalcInputNode.value = externalOutputValue;
-        this.simplifiInputNode.value = externalOutputValue;
         //this.simplifyInputNode.dispatchEvent(new Event('click', { bubbles: true }));
         //this.simplifyInputNode.dispatchEvent(new Event('focus', { bubbles: true }));
         this.simplifiInputNode.dispatchEvent(new Event('change', { bubbles: true })); // must dispatch change for value to commit on simplifi side
