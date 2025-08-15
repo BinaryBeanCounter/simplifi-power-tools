@@ -4,9 +4,12 @@ import {amountFieldKeyGenerator} from './helperFunctions';
 export class TransactionModel{
 
     addCalculators(ModelNode){
-      let allAmountNodes = ModelNode.querySelectorAll('[sharedcomponentid="QAmountField"]');
-      for (let i = 0; i < allAmountNodes.length; i++) {
-        let AmountNode = allAmountNodes[i];
+      if (!this.cachedAmountNodes || this.cachedAmountNodes.length === 0) {
+        this.cachedAmountNodes = ModelNode.querySelectorAll('[sharedcomponentid="QAmountField"]');
+      }
+      
+      for (let i = 0; i < this.cachedAmountNodes.length; i++) {
+        let AmountNode = this.cachedAmountNodes[i];
         console.log("QAmountField Detected id =" + AmountNode.id + "  node: " + AmountNode.cloneNode(false).outerHTML);
         this.createCalculator(AmountNode, ModelNode);
       }
@@ -52,6 +55,7 @@ export class TransactionModel{
                 value.destory();
               }
               this.calculatorMap = new Map(); // clear all calculators and recreate because simplifi always removes the last QAmountField node regardless of which row is deleted and then it reassigns values to all of the previous QAmountFields to make it look like you removed a middle one but this can be confirmed by looking at the ID field of the split row
+              this.cachedAmountNodes = null;
               //recreate all calculators
               this.addCalculators(this.parentModel);
             }
@@ -66,6 +70,7 @@ export class TransactionModel{
       this.detailPane = transactionDetailHeader.parentNode.querySelector(`.css-4rizef-root`);
       console.log("Detail Root Pane Found id =" + this.detailPane.id + "  node: " + this.detailPane.cloneNode(false).outerHTML);
       this.calculatorMap = new Map();
+      this.cachedAmountNodes = null;
       this.addCalculators(this.parentModel);
       this.setupSplitObserver(this.detailPane);
     }
