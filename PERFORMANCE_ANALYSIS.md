@@ -14,6 +14,8 @@ This report identifies 6 key performance inefficiencies in the simplifi-power-to
 - During DOM mutations when split rows are added/removed
 - When recreating calculators after row deletions
 
+**Additional Issue**: The hardcoded selector `[sharedcomponentid="QAmountField"]` makes the extension brittle - if Simplifi changes their component structure, the extension breaks entirely. ✅ RESOLVED: Implemented comprehensive resilient selector system with fallback options.
+
 **Performance Impact**: Each `querySelectorAll` call traverses the entire DOM subtree, which can be expensive on complex Simplifi pages with many elements.
 
 ### 2. 🟡 Medium: Memory Leaks in Event Listeners
@@ -61,8 +63,8 @@ This report identifies 6 key performance inefficiencies in the simplifi-power-to
 
 ## Recommended Fixes (Priority Order)
 
-### 1. Implement DOM Query Caching (Critical)
-Cache `querySelectorAll` results in `TransactionModel` class and invalidate cache when DOM structure changes.
+### 1. Implement DOM Query Caching with Resilient Selectors (Critical) ✅ COMPLETED
+Implemented DOM query caching in `TransactionModel` class with multiple fallback selectors and proper cache invalidation. Created comprehensive resilient selector systems across all components to adapt to Simplifi UI changes.
 
 ### 2. Fix Event Listener Cleanup (Medium)
 Ensure all event listeners are properly removed in the `destory()` method.

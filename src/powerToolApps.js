@@ -32,12 +32,35 @@ export class PowerToolApps{
     }
   }
 
+  static TRANSACTION_DIALOG_SELECTORS = [
+    '[sharedcomponentid="TRANSACTION_DETAILS_DIALOG"]',
+    '[data-testid*="transaction-detail"]',
+    '[role="dialog"][aria-label*="transaction"]',
+    'div[id*="transaction"][id*="detail"]'
+  ];
+
+  findTransactionDetailDialog(item) {
+    for (const selector of PowerToolApps.TRANSACTION_DIALOG_SELECTORS) {
+      try {
+        const dialog = item.querySelector(selector);
+        if (dialog) {
+          console.log(`Found transaction dialog using selector: ${selector}`);
+          return dialog;
+        }
+      } catch (error) {
+        console.warn(`Transaction dialog selector failed: ${selector}`, error);
+        continue;
+      }
+    }
+    return null;
+  }
+
   getTransactionDetailDialog (item){
     if(item)
     {
       //console.log(typeof item);
       try{
-          let TransactionDetailPage = item.querySelector('[sharedcomponentid="TRANSACTION_DETAILS_DIALOG"]');
+          let TransactionDetailPage = this.findTransactionDetailDialog(item);
           if (TransactionDetailPage)
           {
               return TransactionDetailPage;

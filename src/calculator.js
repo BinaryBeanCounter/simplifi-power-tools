@@ -8,6 +8,64 @@ const svgNS = "http://www.w3.org/2000/svg";
 
 export class Calculator {
 
+    static INPUT_FIELD_SELECTORS = [
+      'input[type="text"]',
+      'input[type="number"]',
+      'input[inputmode="decimal"]',
+      'textarea'
+    ];
+
+    static LABEL_SELECTORS = [
+      'label',
+      '[role="label"]',
+      'span[class*="label"]',
+      'div[class*="label"]'
+    ];
+
+    findInputField(container) {
+      for (const selector of Calculator.INPUT_FIELD_SELECTORS) {
+        try {
+          const input = container.querySelector(selector);
+          if (input) {
+            console.log(`Found input field using selector: ${selector}`);
+            return input;
+          }
+        } catch (error) {
+          console.warn(`Input field selector failed: ${selector}`, error);
+          continue;
+        }
+      }
+      return null;
+    }
+
+    findLabel(container) {
+      for (const selector of Calculator.LABEL_SELECTORS) {
+        try {
+          const label = container.querySelector(selector);
+          if (label) {
+            console.log(`Found label using selector: ${selector}`);
+            return label;
+          }
+        } catch (error) {
+          console.warn(`Label selector failed: ${selector}`, error);
+          continue;
+        }
+      }
+      return null;
+    }
+
+    findInputContainer(qAmountFieldNode) {
+      for (let i = 0; i < qAmountFieldNode.childNodes.length; i++) {
+        const child = qAmountFieldNode.childNodes[i];
+        if (child.nodeType === Node.ELEMENT_NODE && this.findInputField(child)) {
+          console.log(`Found input container at child index: ${i}`);
+          return child;
+        }
+      }
+      console.warn('No input container found, using first child as fallback');
+      return qAmountFieldNode.childNodes[0];
+    }
+
     showSimplifiInputBox(){
       this.simplifiInputContainerNode.style.display='block';
     }
@@ -289,11 +347,12 @@ export class Calculator {
       this.simplifiInputDiv.appendChild(this.powerToolActivateCalcButtonContainer);
      
   
-      this.powerToolCalcInputLabel = this.powerToolCalcContainerNode.querySelector('label');
-      this.powerToolCalcInputLabel.textContent = "Power Tool Calc" 
-      this.powerToolCalcInputLabel.classList.add('hello');
-      //this.powerToolCalcInputLabel.addAttribute("associated-amount");
-      this.powerToolCalcInputLabel.setAttribute("associated-amount",this.simplifiQAmountFieldNodeID);
+      this.powerToolCalcInputLabel = this.findLabel(this.powerToolCalcContainerNode);
+      if (this.powerToolCalcInputLabel) {
+        this.powerToolCalcInputLabel.textContent = "Power Tool Calc";
+        this.powerToolCalcInputLabel.classList.add('hello');
+        this.powerToolCalcInputLabel.setAttribute("associated-amount",this.simplifiQAmountFieldNodeID);
+      }
      
       // this is not workng presently
       if (this.powerToolCalcInputNode.hasAttribute("sharedcomponentid")) {
@@ -306,9 +365,11 @@ export class Calculator {
         dollarSymbolDiv.parentNode.removeChild(dollarSymbolDiv);
       }
   
-      let oldNode = this.powerToolCalcContainerNode.querySelector('input[type="text"]'); // find text field and replace it with new input field
-      this.powerToolCalcInputNode.className = oldNode.className;
-      oldNode.parentNode.replaceChild(this.powerToolCalcInputNode, oldNode);
+      let oldNode = this.findInputField(this.powerToolCalcContainerNode);
+      if (oldNode) {
+        this.powerToolCalcInputNode.className = oldNode.className;
+        oldNode.parentNode.replaceChild(this.powerToolCalcInputNode, oldNode);
+      }
       //this.powerToolCalcInputNode.type = 'text';
       //this.powerToolCalcInputNode.style.cssText = `width: 100px; height: 50px; position: absolute; background-color: red; z-index: ${ parseInt(window.getComputedStyle(this.transactionModel.parentNode.parentNode).getPropertyValue('z-index'))}`;
       //this.powerToolCalcInputNode.style.cssText = `z-index: ${ parseInt(window.getComputedStyle(this.transactionModel.parentNode.parentNode).getPropertyValue('z-index'))}`;
@@ -349,16 +410,15 @@ export class Calculator {
       constructor(transactionModel, simplifiQAmountFieldNode, parent) {
         this.parent = parent;
         this.simplifiQAmountFieldNode = simplifiQAmountFieldNode;
-        this.simplifiInputContainerNode = simplifiQAmountFieldNode.childNodes[0];
+        this.simplifiInputContainerNode = this.findInputContainer(simplifiQAmountFieldNode);
         this.transactionModel = transactionModel;
-        this.simplifiInputNode = this.simplifiQAmountFieldNode.querySelector('input[type="text"]');
-        this.simplifiInputDiv = this.simplifiInputNode.parentNode;
+        this.simplifiInputNode = this.findInputField(this.simplifiQAmountFieldNode);
+        this.simplifiInputDiv = this.simplifiInputNode?.parentNode;
         if(!this.simplifiInputNode){
-          console.log("PowerTool Error: unable to locate input[type=text] field as a child of " + this.simplifiQAmountFieldNode.cloneNode(false).outerHTML);
+          console.log("PowerTool Error: unable to locate input field as a child of " + this.simplifiQAmountFieldNode.cloneNode(false).outerHTML);
         }
         this.simplifiQAmountFieldNodeID = amountFieldKeyGenerator(simplifiQAmountFieldNode);
         this.buildCalcNodeAndAttachListeners();
-       // this.setDefaultCalcDirection(this.simplifiInputNode.value[0]);
-        this.setOriginalCalcDirection(this.simplifiInputNode.value[0]);
+        this.setOriginalCalcDirection(this.simplifiInputNode?.value?.[0] || '');
       }
   }
