@@ -279,7 +279,7 @@ export class Calculator {
       this.powerToolCalcContainerNode.id = CalcIDBaseName + "-Container";
       this.powerToolCalcInputNode = document.createElement("textarea");
       this.powerToolCalcInputNode.id = CalcIDBaseName + "-Input";
-      this.powerToolCalcInputNode.setAttribute("associated-amount:",this.simplifiQAmountFieldNodeID);
+      this.powerToolCalcInputNode.setAttribute("associated-amount:", this.inputElementID);
   
       // must append after cloning
       this.simplifiInputDiv.appendChild(this.powerToolActivateCalcButtonContainer);
@@ -289,10 +289,6 @@ export class Calculator {
       if(this.powerToolCalcInputLabel) {
         this.powerToolCalcInputLabel.textContent = "Power Tool Calc";
         this.powerToolCalcInputLabel.setAttribute("associated-amount", this.inputElementID);
-      }
-     
-      if (this.powerToolCalcInputNode.hasAttribute("sharedcomponentid")) {
-        this.powerToolCalcInputNode.removeAttribute("sharedcomponentid");
       }
       
       const dollarSymbols = this.powerToolCalcContainerNode.querySelectorAll('*');
@@ -324,25 +320,12 @@ export class Calculator {
     }
   
   
-      // structure of a simplifi split node and associated PowerTool Calc node is as follows and fields are mapped as follows
-      // <div id="details-amount" sharedcomponentid="QAmountField"> => this.simplifiSplitNode 
-      //  <div> => this.simplifiInputContainerNode (first child under QAmountField) we will use this to hide and show the field (this is cloned and added as a child to the this.simplifiSplitNode  to become this.powerToolCalcContainerNode node to ensure styles are consistent)
-      //    <label>Amount</label>
-      //    <div> => this.simplifiInputDiv
-      //      <span>$</span> // removed in clone
-      //      <input>(+/-)x.yz</input> => this.simplifiInputNode
-      //    </div>
-      //    <div>
-      //      <>
-      //    </div>
-      //  </div>
-      //  <div> => this.powerToolCalcContainerNode (now second child under QAmountField) we will use this to hide and show the field (this was cloned from this.simplifiInputContainerNode and added as a child to the this.simplifiSplitNode  to become this.powerToolCalcContainerNode node to ensure styles are consistent)
-      //    <label>PowerTools Calc</label> => this.powerToolCalcInputLabel
-      //    <div>
-      //      <textarea>(+/-)x.yz</textarea> => this.powerToolCalcInputNode (replaced the input to support multiline)
-      //    </div>
-      //  </div> 
-      // </div>
+      // this.simplifiInputNode => <input>(+/-)x.yz</input> - Original Simplifi input element
+      // this.simplifiInputDiv => Parent div containing the input and dollar sign
+      // this.simplifiInputContainerNode => Container found by InputDiscovery.findInputContainer()
+      // this.powerToolCalcContainerNode => Cloned container with textarea replacing input
+      //   <label>PowerTools Calc</label> => this.powerToolCalcInputLabel
+      //     <textarea>(+/-)x.yz</textarea> => this.powerToolCalcInputNode (supports multiline)
   
       destory(){
         this.simplifiInputNode.removeEventListener('focus', this.simplifiInputNodefocusHandler)

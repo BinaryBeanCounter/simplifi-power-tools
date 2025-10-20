@@ -68,23 +68,6 @@ export class InputDiscovery {
   static findAllNumericInputs(rootNode) {
     const inputs = [];
     
-    const legacyQAmountFields = rootNode.querySelectorAll('[sharedcomponentid="QAmountField"]');
-    for (let i = 0; i < legacyQAmountFields.length; i++) {
-      const qAmountField = legacyQAmountFields[i];
-      const inputField = qAmountField.querySelector('input[type="text"]');
-      if (inputField) {
-        inputs.push({
-          inputElement: inputField,
-          containerElement: qAmountField,
-          detectionMethod: 'legacy-selector'
-        });
-      }
-    }
-    
-    if (inputs.length > 0) {
-      return inputs;
-    }
-    
     const allInputs = rootNode.querySelectorAll('input[type="text"]');
     for (let i = 0; i < allInputs.length; i++) {
       const input = allInputs[i];
