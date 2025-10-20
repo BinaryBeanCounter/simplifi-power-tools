@@ -335,7 +335,6 @@ export class Calculator {
   
       constructor(transactionModel, inputElement, parent) {
         this.parent = parent;
-        this.transactionModel = transactionModel;
         this.simplifiInputNode = inputElement;
         this.simplifiInputDiv = inputElement.parentNode;
         this.simplifiInputContainerNode = InputDiscovery.findInputContainer(inputElement);
