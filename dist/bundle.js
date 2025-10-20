@@ -451,6 +451,148 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
 
+;// CONCATENATED MODULE: ./src/inputDiscovery.js
+class InputDiscovery {
+  
+  static isCurrencyInput(inputElement) {
+    if (!inputElement || inputElement.tagName !== 'INPUT') {
+      return false;
+    }
+    
+    const value = inputElement.value || '';
+    const placeholder = inputElement.placeholder || '';
+    
+    const currencyPattern = /^[+\-]?\$?\d*\.?\d*$/;
+    
+    if (currencyPattern.test(value) && value.trim() !== '') {
+      return true;
+    }
+    
+    if (placeholder && (placeholder.includes('$') || placeholder.includes('amount') || placeholder.includes('Amount'))) {
+      return true;
+    }
+    
+    const inputMode = inputElement.getAttribute('inputmode');
+    if (inputMode === 'decimal' || inputMode === 'numeric') {
+      return true;
+    }
+    
+    const label = this.findAssociatedLabel(inputElement);
+    if (label) {
+      const labelText = label.textContent.toLowerCase();
+      if (labelText.includes('amount') || labelText.includes('$')) {
+        return true;
+      }
+    }
+    
+    const parentDiv = inputElement.parentNode;
+    if (parentDiv) {
+      const dollarSign = Array.from(parentDiv.children).find(child => 
+        child.textContent.trim() === '$'
+      );
+      if (dollarSign) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+  
+  static findAssociatedLabel(inputElement) {
+    if (inputElement.id) {
+      const label = document.querySelector(`label[for="${inputElement.id}"]`);
+      if (label) return label;
+    }
+    
+    let parent = inputElement.parentNode;
+    while (parent && parent !== document.body) {
+      if (parent.tagName === 'LABEL') {
+        return parent;
+      }
+      const label = parent.querySelector('label');
+      if (label) {
+        return label;
+      }
+      parent = parent.parentNode;
+    }
+    
+    return null;
+  }
+  
+  static findAllNumericInputs(rootNode) {
+    const inputs = [];
+    
+    const legacyQAmountFields = rootNode.querySelectorAll('[sharedcomponentid="QAmountField"]');
+    for (let i = 0; i < legacyQAmountFields.length; i++) {
+      const qAmountField = legacyQAmountFields[i];
+      const inputField = qAmountField.querySelector('input[type="text"]');
+      if (inputField) {
+        inputs.push({
+          inputElement: inputField,
+          containerElement: qAmountField,
+          detectionMethod: 'legacy-selector'
+        });
+      }
+    }
+    
+    if (inputs.length > 0) {
+      return inputs;
+    }
+    
+    const allInputs = rootNode.querySelectorAll('input[type="text"]');
+    for (let i = 0; i < allInputs.length; i++) {
+      const input = allInputs[i];
+      if (this.isCurrencyInput(input)) {
+        inputs.push({
+          inputElement: input,
+          containerElement: this.findInputContainer(input),
+          detectionMethod: 'heuristic'
+        });
+      }
+    }
+    
+    return inputs;
+  }
+  
+  static findInputContainer(inputElement) {
+    let parent = inputElement.parentNode;
+    let depth = 0;
+    const maxDepth = 5;
+    
+    while (parent && depth < maxDepth && parent !== document.body) {
+      const hasLabel = parent.querySelector('label') !== null;
+      const hasMultipleChildren = parent.children.length > 1;
+      
+      if (hasLabel && hasMultipleChildren) {
+        return parent;
+      }
+      
+      parent = parent.parentNode;
+      depth++;
+    }
+    
+    return inputElement.parentNode || inputElement;
+  }
+  
+  static generateInputKey(inputElement) {
+    if (inputElement.id) {
+      return inputElement.id;
+    }
+    
+    const container = this.findInputContainer(inputElement);
+    if (container && container.id) {
+      return container.id;
+    }
+    
+    const label = this.findAssociatedLabel(inputElement);
+    const labelText = label ? label.textContent.trim() : 'unknown';
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 10000);
+    
+    return `input-${labelText.replace(/\s+/g, '-').toLowerCase()}-${timestamp}-${random}`;
+  }
+}
+
 ;// CONCATENATED MODULE: ./src/helperFunctions.js
 
 function amountFieldKeyGenerator(QAmountField){
@@ -850,26 +992,22 @@ class Calculator {
     }
   
     powerToolInputNodelossFocusHandler(event) { 
-      //recalculate as long as close button is not clicked
-    // ensure no redirect against self on force recalc
-    //if(event.target.id ='PowerToolsCalc-Input' and event.relatedTarget.) // redirect is not working
     if(event.relatedTarget === null || !event.relatedTarget.hasAttribute("id") || (event.relatedTarget.id !=='dlg-close')){
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         this.runCalculator();
         let externalOutputValue = this.getReturnTimeDirectionIndicator(this.powerToolCalcInputNode.value);
         this.powerToolCalcInputNode.value = externalOutputValue;
-        this.simplifiInputNode.value = externalOutputValue;
-        //this.simplifyInputNode.dispatchEvent(new Event('click', { bubbles: true }));
-        //this.simplifyInputNode.dispatchEvent(new Event('focus', { bubbles: true }));
-        this.simplifiInputNode.dispatchEvent(new Event('change', { bubbles: true })); // must dispatch change for value to commit on simplifi side
-        //this.simplifyInputNode.dispatchEvent(new Event('blur', { bubbles: true, cancelable: false })); //lr.splitsHelpers.adjustSplitLine
-
-      }, 50);
+        
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+        nativeInputValueSetter.call(this.simplifiInputNode, externalOutputValue);
+        
+        this.simplifiInputNode.dispatchEvent(new Event('input', { bubbles: true }));
+        this.simplifiInputNode.dispatchEvent(new Event('change', { bubbles: true }));
+      });
     
       this.hidePowerToolInputBox()
       this.showSimplifiInputBox();
 
-      //this.setDefaultCalcDirection(this.powerToolCalcInputNode.value);
       if(event.relatedTarget !== null){
         console.log("Loss Handler redirecting focus to " + event.relatedTarget);
         this.ForceSimplifiRecalcThenRedirect(event.relatedTarget);
@@ -908,20 +1046,22 @@ class Calculator {
      
   
       this.powerToolCalcInputLabel = this.powerToolCalcContainerNode.querySelector('label');
-      this.powerToolCalcInputLabel.textContent = "Power Tool Calc" 
-      this.powerToolCalcInputLabel.classList.add('hello');
-      //this.powerToolCalcInputLabel.addAttribute("associated-amount");
-      this.powerToolCalcInputLabel.setAttribute("associated-amount",this.simplifiQAmountFieldNodeID);
+      if(this.powerToolCalcInputLabel) {
+        this.powerToolCalcInputLabel.textContent = "Power Tool Calc";
+        this.powerToolCalcInputLabel.setAttribute("associated-amount", this.inputElementID);
+      }
      
-      // this is not workng presently
       if (this.powerToolCalcInputNode.hasAttribute("sharedcomponentid")) {
         this.powerToolCalcInputNode.removeAttribute("sharedcomponentid");
       }
-      // find $ and remove it
-      let dollarSymbolDiv = findFirst(this.powerToolCalcContainerNode,"div","$");
-      if(dollarSymbolDiv){
-        // remove dollar sign div
-        dollarSymbolDiv.parentNode.removeChild(dollarSymbolDiv);
+      
+      const dollarSymbols = this.powerToolCalcContainerNode.querySelectorAll('*');
+      for(let i = 0; i < dollarSymbols.length; i++) {
+        const elem = dollarSymbols[i];
+        if(elem.textContent.trim() === '$' && elem.children.length === 0) {
+          elem.parentNode.removeChild(elem);
+          break;
+        }
       }
   
       let oldNode = this.powerToolCalcContainerNode.querySelector('input[type="text"]'); // find text field and replace it with new input field
@@ -933,8 +1073,14 @@ class Calculator {
       this.powerToolCalcInputNode.addEventListener('blur',(event) => this.powerToolInputNodelossFocusHandler(event));
       this.powerToolCalcInputNode.addEventListener('keydown',(event) => this.keyDownHandler(event));
       this.powerToolCalcInputNode.addEventListener('input',(event) => this.inputChangeHandler(event));
-      this.hidePowerToolInputBox(); // don't show until user clicks on an associated simplifi input box
-      this.simplifiQAmountFieldNode.appendChild(this.powerToolCalcContainerNode);
+      this.hidePowerToolInputBox();
+      
+      let parentContainer = this.simplifiInputContainerNode.parentNode;
+      if(parentContainer) {
+        parentContainer.appendChild(this.powerToolCalcContainerNode);
+      } else {
+        this.simplifiInputDiv.appendChild(this.powerToolCalcContainerNode);
+      }
     }
   
   
@@ -964,22 +1110,22 @@ class Calculator {
         this.powerToolActivateCalcButtonContainer.parentNode.removeChild(this.powerToolActivateCalcButtonContainer); // remove calc icon
       }
   
-      constructor(transactionModel, simplifiQAmountFieldNode, parent) {
+      constructor(transactionModel, inputElement, parent) {
         this.parent = parent;
-        this.simplifiQAmountFieldNode = simplifiQAmountFieldNode;
-        this.simplifiInputContainerNode = simplifiQAmountFieldNode.childNodes[0];
         this.transactionModel = transactionModel;
-        this.simplifiInputNode = this.simplifiQAmountFieldNode.querySelector('input[type="text"]');
-        this.simplifiInputDiv = this.simplifiInputNode.parentNode;
+        this.simplifiInputNode = inputElement;
+        this.simplifiInputDiv = inputElement.parentNode;
+        this.simplifiInputContainerNode = InputDiscovery.findInputContainer(inputElement);
+        
         if(!this.simplifiInputNode){
-          console.log("PowerTool Error: unable to locate input[type=text] field as a child of " + this.simplifiQAmountFieldNode.cloneNode(false).outerHTML);
+          console.log("PowerTool Error: unable to locate input element");
         }
-        this.simplifiQAmountFieldNodeID = amountFieldKeyGenerator(simplifiQAmountFieldNode);
+        this.inputElementID = InputDiscovery.generateInputKey(inputElement);
         this.buildCalcNodeAndAttachListeners();
-       // this.setDefaultCalcDirection(this.simplifiInputNode.value[0]);
         this.setOriginalCalcDirection(this.simplifiInputNode.value[0]);
       }
   }
+
 ;// CONCATENATED MODULE: ./src/transactionModel.js
 
 
@@ -987,21 +1133,21 @@ class Calculator {
 class TransactionModel{
 
     addCalculators(ModelNode){
-      let allAmountNodes = ModelNode.querySelectorAll('[sharedcomponentid="QAmountField"]');
-      for (let i = 0; i < allAmountNodes.length; i++) {
-        let AmountNode = allAmountNodes[i];
-        console.log("QAmountField Detected id =" + AmountNode.id + "  node: " + AmountNode.cloneNode(false).outerHTML);
-        this.createCalculator(AmountNode, ModelNode);
+      let allInputs = InputDiscovery.findAllNumericInputs(ModelNode);
+      for (let i = 0; i < allInputs.length; i++) {
+        let inputInfo = allInputs[i];
+        console.log("Numeric Input Detected via " + inputInfo.detectionMethod + " - input: " + inputInfo.inputElement.cloneNode(false).outerHTML);
+        this.createCalculator(inputInfo.inputElement, ModelNode);
       }
     }
   
-    createCalculator(qAmountNode, ModelNode){
-      let currentCalc = new Calculator(ModelNode,qAmountNode,this);
-      this.calculatorMap.set(currentCalc.simplifiQAmountFieldNodeID, currentCalc);
+    createCalculator(inputElement, ModelNode){
+      let currentCalc = new Calculator(ModelNode, inputElement, this);
+      this.calculatorMap.set(currentCalc.inputElementID, currentCalc);
     }
   
-    checkIfCalculatorExists(qAmountNode){
-        let id = amountFieldKeyGenerator(qAmountNode);
+    checkIfCalculatorExists(inputElement){
+        let id = InputDiscovery.generateInputKey(inputElement);
         return this.calculatorMap.has(id);
     }
   
@@ -1017,10 +1163,13 @@ class TransactionModel{
           mutation.addedNodes.forEach( (element) => {
             console.log("added id =" + element?.id + "  node: " + element.cloneNode(false).outerHTML);
             if(element?.getAttribute('class')?.includes('-catRow')){
-              let AmountNode = element.querySelector('[sharedcomponentid="QAmountField"]');
-              console.log("QAmountField Detected id =" + AmountNode.id + "  node: " + AmountNode.cloneNode(false).outerHTML);
-              if(!this.checkIfCalculatorExists(AmountNode)){
-                this.createCalculator(AmountNode, this.parentModel);
+              let inputInfos = InputDiscovery.findAllNumericInputs(element);
+              if(inputInfos.length > 0) {
+                let inputInfo = inputInfos[0];
+                console.log("Numeric Input Detected via " + inputInfo.detectionMethod + " - input: " + inputInfo.inputElement.cloneNode(false).outerHTML);
+                if(!this.checkIfCalculatorExists(inputInfo.inputElement)){
+                  this.createCalculator(inputInfo.inputElement, this.parentModel);
+                }
               }
             }
           })
@@ -1030,12 +1179,10 @@ class TransactionModel{
             console.log("removed id =" + element?.id + "  node: " + element.cloneNode(false).outerHTML);
             if(element?.getAttribute('class')?.includes('-catRow')){
               console.log("cat remove removed id =" + element.id + "  node: " + element.cloneNode(false).outerHTML);
-              // todo: I think i need to detach all of these nodes from the dom and recreate them in case you are on a amount field and directly click the garbage icon
               for( let [key,value] of this.calculatorMap.entries()){
                 value.destory();
               }
-              this.calculatorMap = new Map(); // clear all calculators and recreate because simplifi always removes the last QAmountField node regardless of which row is deleted and then it reassigns values to all of the previous QAmountFields to make it look like you removed a middle one but this can be confirmed by looking at the ID field of the split row
-              //recreate all calculators
+              this.calculatorMap = new Map();
               this.addCalculators(this.parentModel);
             }
           });
@@ -1053,6 +1200,7 @@ class TransactionModel{
       this.setupSplitObserver(this.detailPane);
     }
   }
+
 ;// CONCATENATED MODULE: ./src/powerToolApps.js
 
 

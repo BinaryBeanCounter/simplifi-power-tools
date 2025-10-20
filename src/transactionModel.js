@@ -1,24 +1,24 @@
 import {Calculator} from './calculator';
-import {amountFieldKeyGenerator} from './helperFunctions';
+import {InputDiscovery} from './inputDiscovery';
 
 export class TransactionModel{
 
     addCalculators(ModelNode){
-      let allAmountNodes = ModelNode.querySelectorAll('[sharedcomponentid="QAmountField"]');
-      for (let i = 0; i < allAmountNodes.length; i++) {
-        let AmountNode = allAmountNodes[i];
-        console.log("QAmountField Detected id =" + AmountNode.id + "  node: " + AmountNode.cloneNode(false).outerHTML);
-        this.createCalculator(AmountNode, ModelNode);
+      let allInputs = InputDiscovery.findAllNumericInputs(ModelNode);
+      for (let i = 0; i < allInputs.length; i++) {
+        let inputInfo = allInputs[i];
+        console.log("Numeric Input Detected via " + inputInfo.detectionMethod + " - input: " + inputInfo.inputElement.cloneNode(false).outerHTML);
+        this.createCalculator(inputInfo.inputElement, ModelNode);
       }
     }
   
-    createCalculator(qAmountNode, ModelNode){
-      let currentCalc = new Calculator(ModelNode,qAmountNode,this);
-      this.calculatorMap.set(currentCalc.simplifiQAmountFieldNodeID, currentCalc);
+    createCalculator(inputElement, ModelNode){
+      let currentCalc = new Calculator(ModelNode, inputElement, this);
+      this.calculatorMap.set(currentCalc.inputElementID, currentCalc);
     }
   
-    checkIfCalculatorExists(qAmountNode){
-        let id = amountFieldKeyGenerator(qAmountNode);
+    checkIfCalculatorExists(inputElement){
+        let id = InputDiscovery.generateInputKey(inputElement);
         return this.calculatorMap.has(id);
     }
   
@@ -34,10 +34,13 @@ export class TransactionModel{
           mutation.addedNodes.forEach( (element) => {
             console.log("added id =" + element?.id + "  node: " + element.cloneNode(false).outerHTML);
             if(element?.getAttribute('class')?.includes('-catRow')){
-              let AmountNode = element.querySelector('[sharedcomponentid="QAmountField"]');
-              console.log("QAmountField Detected id =" + AmountNode.id + "  node: " + AmountNode.cloneNode(false).outerHTML);
-              if(!this.checkIfCalculatorExists(AmountNode)){
-                this.createCalculator(AmountNode, this.parentModel);
+              let inputInfos = InputDiscovery.findAllNumericInputs(element);
+              if(inputInfos.length > 0) {
+                let inputInfo = inputInfos[0];
+                console.log("Numeric Input Detected via " + inputInfo.detectionMethod + " - input: " + inputInfo.inputElement.cloneNode(false).outerHTML);
+                if(!this.checkIfCalculatorExists(inputInfo.inputElement)){
+                  this.createCalculator(inputInfo.inputElement, this.parentModel);
+                }
               }
             }
           })
@@ -47,12 +50,10 @@ export class TransactionModel{
             console.log("removed id =" + element?.id + "  node: " + element.cloneNode(false).outerHTML);
             if(element?.getAttribute('class')?.includes('-catRow')){
               console.log("cat remove removed id =" + element.id + "  node: " + element.cloneNode(false).outerHTML);
-              // todo: I think i need to detach all of these nodes from the dom and recreate them in case you are on a amount field and directly click the garbage icon
               for( let [key,value] of this.calculatorMap.entries()){
                 value.destory();
               }
-              this.calculatorMap = new Map(); // clear all calculators and recreate because simplifi always removes the last QAmountField node regardless of which row is deleted and then it reassigns values to all of the previous QAmountFields to make it look like you removed a middle one but this can be confirmed by looking at the ID field of the split row
-              //recreate all calculators
+              this.calculatorMap = new Map();
               this.addCalculators(this.parentModel);
             }
           });

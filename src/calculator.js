@@ -1,4 +1,4 @@
-import {amountFieldKeyGenerator, findFirst} from './helperFunctions';
+import {InputDiscovery} from './inputDiscovery';
 import {DoMath} from './math';
 import './style.css';
 
@@ -232,26 +232,22 @@ export class Calculator {
     }
   
     powerToolInputNodelossFocusHandler(event) { 
-      //recalculate as long as close button is not clicked
-    // ensure no redirect against self on force recalc
-    //if(event.target.id ='PowerToolsCalc-Input' and event.relatedTarget.) // redirect is not working
     if(event.relatedTarget === null || !event.relatedTarget.hasAttribute("id") || (event.relatedTarget.id !=='dlg-close')){
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         this.runCalculator();
         let externalOutputValue = this.getReturnTimeDirectionIndicator(this.powerToolCalcInputNode.value);
         this.powerToolCalcInputNode.value = externalOutputValue;
-        this.simplifiInputNode.value = externalOutputValue;
-        //this.simplifyInputNode.dispatchEvent(new Event('click', { bubbles: true }));
-        //this.simplifyInputNode.dispatchEvent(new Event('focus', { bubbles: true }));
-        this.simplifiInputNode.dispatchEvent(new Event('change', { bubbles: true })); // must dispatch change for value to commit on simplifi side
-        //this.simplifyInputNode.dispatchEvent(new Event('blur', { bubbles: true, cancelable: false })); //lr.splitsHelpers.adjustSplitLine
-
-      }, 50);
+        
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+        nativeInputValueSetter.call(this.simplifiInputNode, externalOutputValue);
+        
+        this.simplifiInputNode.dispatchEvent(new Event('input', { bubbles: true }));
+        this.simplifiInputNode.dispatchEvent(new Event('change', { bubbles: true }));
+      });
     
       this.hidePowerToolInputBox()
       this.showSimplifiInputBox();
 
-      //this.setDefaultCalcDirection(this.powerToolCalcInputNode.value);
       if(event.relatedTarget !== null){
         console.log("Loss Handler redirecting focus to " + event.relatedTarget);
         this.ForceSimplifiRecalcThenRedirect(event.relatedTarget);
@@ -290,20 +286,22 @@ export class Calculator {
      
   
       this.powerToolCalcInputLabel = this.powerToolCalcContainerNode.querySelector('label');
-      this.powerToolCalcInputLabel.textContent = "Power Tool Calc" 
-      this.powerToolCalcInputLabel.classList.add('hello');
-      //this.powerToolCalcInputLabel.addAttribute("associated-amount");
-      this.powerToolCalcInputLabel.setAttribute("associated-amount",this.simplifiQAmountFieldNodeID);
+      if(this.powerToolCalcInputLabel) {
+        this.powerToolCalcInputLabel.textContent = "Power Tool Calc";
+        this.powerToolCalcInputLabel.setAttribute("associated-amount", this.inputElementID);
+      }
      
-      // this is not workng presently
       if (this.powerToolCalcInputNode.hasAttribute("sharedcomponentid")) {
         this.powerToolCalcInputNode.removeAttribute("sharedcomponentid");
       }
-      // find $ and remove it
-      let dollarSymbolDiv = findFirst(this.powerToolCalcContainerNode,"div","$");
-      if(dollarSymbolDiv){
-        // remove dollar sign div
-        dollarSymbolDiv.parentNode.removeChild(dollarSymbolDiv);
+      
+      const dollarSymbols = this.powerToolCalcContainerNode.querySelectorAll('*');
+      for(let i = 0; i < dollarSymbols.length; i++) {
+        const elem = dollarSymbols[i];
+        if(elem.textContent.trim() === '$' && elem.children.length === 0) {
+          elem.parentNode.removeChild(elem);
+          break;
+        }
       }
   
       let oldNode = this.powerToolCalcContainerNode.querySelector('input[type="text"]'); // find text field and replace it with new input field
@@ -315,8 +313,14 @@ export class Calculator {
       this.powerToolCalcInputNode.addEventListener('blur',(event) => this.powerToolInputNodelossFocusHandler(event));
       this.powerToolCalcInputNode.addEventListener('keydown',(event) => this.keyDownHandler(event));
       this.powerToolCalcInputNode.addEventListener('input',(event) => this.inputChangeHandler(event));
-      this.hidePowerToolInputBox(); // don't show until user clicks on an associated simplifi input box
-      this.simplifiQAmountFieldNode.appendChild(this.powerToolCalcContainerNode);
+      this.hidePowerToolInputBox();
+      
+      let parentContainer = this.simplifiInputContainerNode.parentNode;
+      if(parentContainer) {
+        parentContainer.appendChild(this.powerToolCalcContainerNode);
+      } else {
+        this.simplifiInputDiv.appendChild(this.powerToolCalcContainerNode);
+      }
     }
   
   
@@ -346,19 +350,18 @@ export class Calculator {
         this.powerToolActivateCalcButtonContainer.parentNode.removeChild(this.powerToolActivateCalcButtonContainer); // remove calc icon
       }
   
-      constructor(transactionModel, simplifiQAmountFieldNode, parent) {
+      constructor(transactionModel, inputElement, parent) {
         this.parent = parent;
-        this.simplifiQAmountFieldNode = simplifiQAmountFieldNode;
-        this.simplifiInputContainerNode = simplifiQAmountFieldNode.childNodes[0];
         this.transactionModel = transactionModel;
-        this.simplifiInputNode = this.simplifiQAmountFieldNode.querySelector('input[type="text"]');
-        this.simplifiInputDiv = this.simplifiInputNode.parentNode;
+        this.simplifiInputNode = inputElement;
+        this.simplifiInputDiv = inputElement.parentNode;
+        this.simplifiInputContainerNode = InputDiscovery.findInputContainer(inputElement);
+        
         if(!this.simplifiInputNode){
-          console.log("PowerTool Error: unable to locate input[type=text] field as a child of " + this.simplifiQAmountFieldNode.cloneNode(false).outerHTML);
+          console.log("PowerTool Error: unable to locate input element");
         }
-        this.simplifiQAmountFieldNodeID = amountFieldKeyGenerator(simplifiQAmountFieldNode);
+        this.inputElementID = InputDiscovery.generateInputKey(inputElement);
         this.buildCalcNodeAndAttachListeners();
-       // this.setDefaultCalcDirection(this.simplifiInputNode.value[0]);
         this.setOriginalCalcDirection(this.simplifiInputNode.value[0]);
       }
   }
