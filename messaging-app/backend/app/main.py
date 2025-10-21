@@ -6,7 +6,7 @@ from datetime import datetime
 import asyncio
 import uuid
 import os
-from twilio.rest import Client
+import httpx
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -54,16 +54,92 @@ conversations_db = {}
 messages_db = {}
 repeat_tasks = {}
 
-TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
-TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
+TMOBILE_CLIENT_ID = os.getenv("TMOBILE_CLIENT_ID")
+TMOBILE_CLIENT_SECRET = os.getenv("TMOBILE_CLIENT_SECRET")
+TMOBILE_ICCID = os.getenv("TMOBILE_ICCID")
+TMOBILE_AUTH_URL = "https://api.t-mobile.com/oauth2/v1/token"
+TMOBILE_SMS_URL = "https://api.t-mobile.com/messaging/v1/sms/notification"
 
-twilio_client = None
-if TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO_PHONE_NUMBER:
-    twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-    print(f"Twilio initialized with phone number: {TWILIO_PHONE_NUMBER}")
+tmobile_access_token = None
+tmobile_token_expiry = None
+
+async def get_tmobile_access_token():
+    """Get T-Mobile OAuth 2.0 access token using client credentials flow"""
+    global tmobile_access_token, tmobile_token_expiry
+    
+    if not TMOBILE_CLIENT_ID or not TMOBILE_CLIENT_SECRET:
+        print("ERROR: T-Mobile credentials not configured")
+        return None
+    
+    if tmobile_access_token and tmobile_token_expiry:
+        if datetime.now().timestamp() < tmobile_token_expiry:
+            return tmobile_access_token
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                TMOBILE_AUTH_URL,
+                data={
+                    "grant_type": "client_credentials",
+                    "client_id": TMOBILE_CLIENT_ID,
+                    "client_secret": TMOBILE_CLIENT_SECRET
+                },
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
+            )
+            
+            if response.status_code == 200:
+                token_data = response.json()
+                tmobile_access_token = token_data.get("access_token")
+                expires_in = token_data.get("expires_in", 3600)
+                tmobile_token_expiry = datetime.now().timestamp() + expires_in - 60
+                print(f"T-Mobile access token obtained, expires in {expires_in}s")
+                return tmobile_access_token
+            else:
+                print(f"ERROR: Failed to get T-Mobile access token: {response.status_code} - {response.text}")
+                return None
+    except Exception as e:
+        print(f"ERROR: Exception getting T-Mobile access token: {str(e)}")
+        return None
+
+async def send_tmobile_sms(phone_number: str, message: str):
+    """Send SMS using T-Mobile SMS Notification API"""
+    if not TMOBILE_ICCID:
+        raise Exception("T-Mobile ICCID not configured")
+    
+    access_token = await get_tmobile_access_token()
+    if not access_token:
+        raise Exception("Failed to get T-Mobile access token")
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                TMOBILE_SMS_URL,
+                json={
+                    "iccid": TMOBILE_ICCID,
+                    "msisdn": phone_number,
+                    "message": message
+                },
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json"
+                }
+            )
+            
+            if response.status_code in [200, 201, 202]:
+                print(f"SMS sent successfully to {phone_number}")
+                return response.json()
+            else:
+                error_msg = f"HTTP {response.status_code}: {response.text}"
+                print(f"ERROR sending SMS: {error_msg}")
+                raise Exception(error_msg)
+    except Exception as e:
+        print(f"ERROR: Exception sending SMS: {str(e)}")
+        raise
+
+if TMOBILE_CLIENT_ID and TMOBILE_CLIENT_SECRET and TMOBILE_ICCID:
+    print(f"T-Mobile API configured with ICCID: {TMOBILE_ICCID}")
 else:
-    print("Twilio not configured - missing credentials")
+    print("T-Mobile API not configured - missing credentials")
 
 @app.get("/healthz")
 async def healthz():
@@ -102,18 +178,14 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
     conversation = conversations_db[conversation_id]
     
     if request.send_sms and conversation.phone_number:
-        print(f"Attempting to send SMS to {conversation.phone_number}")
-        if not twilio_client:
-            print("ERROR: Twilio not configured")
-            raise HTTPException(status_code=500, detail="Twilio not configured")
+        print(f"Attempting to send SMS to {conversation.phone_number} via T-Mobile API")
+        if not TMOBILE_CLIENT_ID or not TMOBILE_CLIENT_SECRET or not TMOBILE_ICCID:
+            print("ERROR: T-Mobile API not configured")
+            raise HTTPException(status_code=500, detail="T-Mobile API not configured")
         
         try:
-            message_sid = twilio_client.messages.create(
-                body=request.content,
-                from_=TWILIO_PHONE_NUMBER,
-                to=conversation.phone_number
-            )
-            print(f"SMS sent successfully! SID: {message_sid.sid}")
+            await send_tmobile_sms(conversation.phone_number, request.content)
+            print(f"SMS sent successfully via T-Mobile API!")
         except Exception as e:
             print(f"ERROR sending SMS: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Failed to send SMS: {str(e)}")
@@ -137,18 +209,15 @@ async def repeat_message_task(conversation_id: str, sender: str, content: str, i
     message_count = 0
     
     while conversation_id in repeat_tasks:
-        if send_sms and conversation.phone_number and twilio_client:
-            try:
-                message_sid = twilio_client.messages.create(
-                    body=content,
-                    from_=TWILIO_PHONE_NUMBER,
-                    to=conversation.phone_number
-                )
-                message_count += 1
-                if message_count % 10 == 0:
-                    print(f"Sent {message_count} SMS messages")
-            except Exception as e:
-                print(f"Failed to send SMS: {str(e)}")
+        if send_sms and conversation.phone_number:
+            if TMOBILE_CLIENT_ID and TMOBILE_CLIENT_SECRET and TMOBILE_ICCID:
+                try:
+                    await send_tmobile_sms(conversation.phone_number, content)
+                    message_count += 1
+                    if message_count % 10 == 0:
+                        print(f"Sent {message_count} SMS messages via T-Mobile API")
+                except Exception as e:
+                    print(f"Failed to send SMS: {str(e)}")
         
         message = Message(
             id=str(uuid.uuid4()),
