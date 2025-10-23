@@ -2,6 +2,8 @@ const path = require('path');
 const CopyPlugin = require('copy-webpack-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
+const isAnalyze = process.env.ANALYZE === 'true';
+
 module.exports = {
   mode: 'production', // or 'production' or 'development'
   entry: './src/index.js', // the entry point of your app
@@ -34,6 +36,7 @@ module.exports = {
     new CopyPlugin({
       patterns: [{ from: 'static' }],
     }),
-    new BundleAnalyzerPlugin(),
+    // Only add the analyzer if ANALYZE=true on the build in webpack
+    ...(isAnalyze ? [new BundleAnalyzerPlugin()] : []),
   ],
 };
