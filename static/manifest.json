@@ -13,7 +13,8 @@
         {
           "js": ["bundle.js"],
           "matches": [
-            "https://app.simplifimoney.com/*"
+            "https://app.simplifimoney.com/*",
+            "https://simplifi.quicken.com/*"
           ],
           "run_at": "document_idle"
         }
