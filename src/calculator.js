@@ -255,7 +255,7 @@ export class Calculator {
       this.plusButton.style.padding = '0';
       this.plusButton.style.margin = '0';
       this.plusButton.style.border = '1px solid #ccc';
-      this.plusButton.style.backgroundColor = '#f0f0f0';
+      this.plusButton.style.backgroundColor = '#000000';
       this.plusButton.style.cursor = 'pointer';
       this.plusButton.style.borderRadius = '2px';
       this.plusButton.addEventListener('click', () => {
@@ -275,7 +275,7 @@ export class Calculator {
       this.minusButton.style.padding = '0';
       this.minusButton.style.margin = '0';
       this.minusButton.style.border = '1px solid #ccc';
-      this.minusButton.style.backgroundColor = '#f0f0f0';
+      this.minusButton.style.backgroundColor = '#000000';
       this.minusButton.style.cursor = 'pointer';
       this.minusButton.style.borderRadius = '2px';
       this.minusButton.addEventListener('click', () => {
