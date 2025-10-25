@@ -522,23 +522,6 @@ class InputDiscovery {
   static findAllNumericInputs(rootNode) {
     const inputs = [];
     
-    const legacyQAmountFields = rootNode.querySelectorAll('[sharedcomponentid="QAmountField"]');
-    for (let i = 0; i < legacyQAmountFields.length; i++) {
-      const qAmountField = legacyQAmountFields[i];
-      const inputField = qAmountField.querySelector('input[type="text"]');
-      if (inputField) {
-        inputs.push({
-          inputElement: inputField,
-          containerElement: qAmountField,
-          detectionMethod: 'legacy-selector'
-        });
-      }
-    }
-    
-    if (inputs.length > 0) {
-      return inputs;
-    }
-    
     const allInputs = rootNode.querySelectorAll('input[type="text"]');
     for (let i = 0; i < allInputs.length; i++) {
       const input = allInputs[i];
@@ -906,23 +889,7 @@ class Calculator {
           return value;
         }
       }else if (this.originalCalcDirection === ""){
-        if(value > 0 ){
-          return value;
-        }else if ( value < 0){
-          let userInput = prompt("Is this an Expense Category? (yes/no)").toLowerCase();
-          if(userInput ==="yes"){
-            console.log('value before sign flip: ' + value);
-            value = value * -1; // remove negative sign
-            console.log('value before sign append: ' + value);
-            value = '+' + value; // add positive sign
-            console.log('value after sign append: ' + value);
-            return value;
-          }else{
-            return value;
-          }
-        }else {
-          return value;
-        }
+        return value; // Simply return the calculated value with its sign
       }
     }
   
@@ -1017,6 +984,55 @@ class Calculator {
   
     buildCalcNodeAndAttachListeners(){
       //console.log("Input Text Found id =" + this.simplifiInputNode.id + "  node: " + this.simplifiInputNode.cloneNode(false).outerHTML);
+      
+      this.signToggleContainer = document.createElement("div");
+      this.signToggleContainer.style.display = 'flex';
+      this.signToggleContainer.style.flexDirection = 'column';
+      this.signToggleContainer.style.marginRight = '4px';
+      
+      this.plusButton = document.createElement("button");
+      this.plusButton.textContent = '+';
+      this.plusButton.style.width = '1em';
+      this.plusButton.style.height = '1em';
+      this.plusButton.style.fontSize = '0.8em';
+      this.plusButton.style.padding = '0';
+      this.plusButton.style.margin = '0';
+      this.plusButton.style.border = '1px solid #ccc';
+      this.plusButton.style.backgroundColor = '#f0f0f0';
+      this.plusButton.style.cursor = 'pointer';
+      this.plusButton.style.borderRadius = '2px';
+      this.plusButton.addEventListener('click', () => {
+        let value = this.simplifiInputNode.value;
+        if (value.startsWith('+') || value.startsWith('-')) {
+          value = value.slice(1);
+        }
+        this.simplifiInputNode.value = '+' + value;
+        this.simplifiInputNode.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      
+      this.minusButton = document.createElement("button");
+      this.minusButton.textContent = '-';
+      this.minusButton.style.width = '1em';
+      this.minusButton.style.height = '1em';
+      this.minusButton.style.fontSize = '0.8em';
+      this.minusButton.style.padding = '0';
+      this.minusButton.style.margin = '0';
+      this.minusButton.style.border = '1px solid #ccc';
+      this.minusButton.style.backgroundColor = '#f0f0f0';
+      this.minusButton.style.cursor = 'pointer';
+      this.minusButton.style.borderRadius = '2px';
+      this.minusButton.addEventListener('click', () => {
+        let value = this.simplifiInputNode.value;
+        if (value.startsWith('+') || value.startsWith('-')) {
+          value = value.slice(1);
+        }
+        this.simplifiInputNode.value = '-' + value;
+        this.simplifiInputNode.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      
+      this.signToggleContainer.appendChild(this.plusButton);
+      this.signToggleContainer.appendChild(this.minusButton);
+      
       this.powerToolActivateCalcButtonContainer = document.createElement("div");
       this.powerToolActivateCalcButtonContainer.style.display ='flex';
       this.powerToolActivateCalcButton = document.createElement("button");
@@ -1039,9 +1055,10 @@ class Calculator {
       this.powerToolCalcContainerNode.id = CalcIDBaseName + "-Container";
       this.powerToolCalcInputNode = document.createElement("textarea");
       this.powerToolCalcInputNode.id = CalcIDBaseName + "-Input";
-      this.powerToolCalcInputNode.setAttribute("associated-amount:",this.simplifiQAmountFieldNodeID);
+      this.powerToolCalcInputNode.setAttribute("associated-amount:", this.inputElementID);
   
       // must append after cloning
+      this.simplifiInputDiv.appendChild(this.signToggleContainer);
       this.simplifiInputDiv.appendChild(this.powerToolActivateCalcButtonContainer);
      
   
@@ -1049,10 +1066,6 @@ class Calculator {
       if(this.powerToolCalcInputLabel) {
         this.powerToolCalcInputLabel.textContent = "Power Tool Calc";
         this.powerToolCalcInputLabel.setAttribute("associated-amount", this.inputElementID);
-      }
-     
-      if (this.powerToolCalcInputNode.hasAttribute("sharedcomponentid")) {
-        this.powerToolCalcInputNode.removeAttribute("sharedcomponentid");
       }
       
       const dollarSymbols = this.powerToolCalcContainerNode.querySelectorAll('*');
@@ -1084,35 +1097,22 @@ class Calculator {
     }
   
   
-      // structure of a simplifi split node and associated PowerTool Calc node is as follows and fields are mapped as follows
-      // <div id="details-amount" sharedcomponentid="QAmountField"> => this.simplifiSplitNode 
-      //  <div> => this.simplifiInputContainerNode (first child under QAmountField) we will use this to hide and show the field (this is cloned and added as a child to the this.simplifiSplitNode  to become this.powerToolCalcContainerNode node to ensure styles are consistent)
-      //    <label>Amount</label>
-      //    <div> => this.simplifiInputDiv
-      //      <span>$</span> // removed in clone
-      //      <input>(+/-)x.yz</input> => this.simplifiInputNode
-      //    </div>
-      //    <div>
-      //      <>
-      //    </div>
-      //  </div>
-      //  <div> => this.powerToolCalcContainerNode (now second child under QAmountField) we will use this to hide and show the field (this was cloned from this.simplifiInputContainerNode and added as a child to the this.simplifiSplitNode  to become this.powerToolCalcContainerNode node to ensure styles are consistent)
-      //    <label>PowerTools Calc</label> => this.powerToolCalcInputLabel
-      //    <div>
-      //      <textarea>(+/-)x.yz</textarea> => this.powerToolCalcInputNode (replaced the input to support multiline)
-      //    </div>
-      //  </div> 
-      // </div>
+      // this.simplifiInputNode => <input>(+/-)x.yz</input> - Original Simplifi input element
+      // this.simplifiInputDiv => Parent div containing the input and dollar sign
+      // this.simplifiInputContainerNode => Container found by InputDiscovery.findInputContainer()
+      // this.powerToolCalcContainerNode => Cloned container with textarea replacing input
+      //   <label>PowerTools Calc</label> => this.powerToolCalcInputLabel
+      //     <textarea>(+/-)x.yz</textarea> => this.powerToolCalcInputNode (supports multiline)
   
       destory(){
         this.simplifiInputNode.removeEventListener('focus', this.simplifiInputNodefocusHandler)
         this.powerToolCalcContainerNode.parentNode.removeChild(this.powerToolCalcContainerNode); // remove Powertool
         this.powerToolActivateCalcButtonContainer.parentNode.removeChild(this.powerToolActivateCalcButtonContainer); // remove calc icon
+        this.signToggleContainer.parentNode.removeChild(this.signToggleContainer); // remove sign toggle buttons
       }
   
       constructor(transactionModel, inputElement, parent) {
         this.parent = parent;
-        this.transactionModel = transactionModel;
         this.simplifiInputNode = inputElement;
         this.simplifiInputDiv = inputElement.parentNode;
         this.simplifiInputContainerNode = InputDiscovery.findInputContainer(inputElement);
@@ -1126,143 +1126,88 @@ class Calculator {
       }
   }
 
-;// CONCATENATED MODULE: ./src/transactionModel.js
-
-
-
-class TransactionModel{
-
-    addCalculators(ModelNode){
-      let allInputs = InputDiscovery.findAllNumericInputs(ModelNode);
-      for (let i = 0; i < allInputs.length; i++) {
-        let inputInfo = allInputs[i];
-        console.log("Numeric Input Detected via " + inputInfo.detectionMethod + " - input: " + inputInfo.inputElement.cloneNode(false).outerHTML);
-        this.createCalculator(inputInfo.inputElement, ModelNode);
-      }
-    }
-  
-    createCalculator(inputElement, ModelNode){
-      let currentCalc = new Calculator(ModelNode, inputElement, this);
-      this.calculatorMap.set(currentCalc.inputElementID, currentCalc);
-    }
-  
-    checkIfCalculatorExists(inputElement){
-        let id = InputDiscovery.generateInputKey(inputElement);
-        return this.calculatorMap.has(id);
-    }
-  
-    setupSplitObserver(detailPaneRoot){
-      this.config = { attributes: false, childList: true, subtree: true };
-      this.observer = new MutationObserver((mutationList, observer) => this.detailPaneMutuationCallBack(mutationList, observer));
-      this.observer.observe(detailPaneRoot, this.config);
-    }
-  
-    detailPaneMutuationCallBack(mutationList, observer){
-      for (const mutation of mutationList) {
-        if(mutation.addedNodes.length > 0){
-          mutation.addedNodes.forEach( (element) => {
-            console.log("added id =" + element?.id + "  node: " + element.cloneNode(false).outerHTML);
-            if(element?.getAttribute('class')?.includes('-catRow')){
-              let inputInfos = InputDiscovery.findAllNumericInputs(element);
-              if(inputInfos.length > 0) {
-                let inputInfo = inputInfos[0];
-                console.log("Numeric Input Detected via " + inputInfo.detectionMethod + " - input: " + inputInfo.inputElement.cloneNode(false).outerHTML);
-                if(!this.checkIfCalculatorExists(inputInfo.inputElement)){
-                  this.createCalculator(inputInfo.inputElement, this.parentModel);
-                }
-              }
-            }
-          })
-        }
-        if(mutation.removedNodes.length > 0){
-          mutation.removedNodes.forEach( (element) => {
-            console.log("removed id =" + element?.id + "  node: " + element.cloneNode(false).outerHTML);
-            if(element?.getAttribute('class')?.includes('-catRow')){
-              console.log("cat remove removed id =" + element.id + "  node: " + element.cloneNode(false).outerHTML);
-              for( let [key,value] of this.calculatorMap.entries()){
-                value.destory();
-              }
-              this.calculatorMap = new Map();
-              this.addCalculators(this.parentModel);
-            }
-          });
-        }
-      }
-    }
-  
-    constructor (transactionDetailHeader, parent){
-      this.parent = parent;
-      this.parentModel = transactionDetailHeader.parentNode;
-      this.detailPane = transactionDetailHeader.parentNode.querySelector(`.css-4rizef-root`);
-      console.log("Detail Root Pane Found id =" + this.detailPane.id + "  node: " + this.detailPane.cloneNode(false).outerHTML);
-      this.calculatorMap = new Map();
-      this.addCalculators(this.parentModel);
-      this.setupSplitObserver(this.detailPane);
-    }
-  }
-
 ;// CONCATENATED MODULE: ./src/powerToolApps.js
 
 
 
 class PowerToolApps{
  
-  setupTransactionObserver(){
-    this.config = { attributes: false, childList: true, subtree: false };
-    this.observer = new MutationObserver((mutationList, observer) => this.bodyMutationCallback(mutationList, observer));
+  setupDocumentObserver(){
+    this.config = { attributes: false, childList: true, subtree: true };
+    this.observer = new MutationObserver((mutationList, observer) => this.documentMutationCallback(mutationList, observer));
     this.observer.observe(this.targetNode, this.config);
   }
 
-  bodyMutationCallback(mutationList, observer){
+  documentMutationCallback(mutationList, observer){
     for (const mutation of mutationList) {
       if(mutation.addedNodes.length > 0){
         mutation.addedNodes.forEach( (element) => {
-          let transactionDetailDialogNode = this.getTransactionDetailDialog(element);
-          if( transactionDetailDialogNode !== null){
-            console.log("Transaction Detail Dialog Detected id =" + transactionDetailDialogNode.id + "  node: " + transactionDetailDialogNode.cloneNode(false).outerHTML);
-            this.activeTransactionModel = new TransactionModel (transactionDetailDialogNode,this);
+          if(element.nodeType === Node.ELEMENT_NODE) {
+            this.scanForInputs(element);
           }
         })
       }
       if(mutation.removedNodes.length > 0){
         mutation.removedNodes.forEach((element) => {
-          let transactionDetailDialogNode = this.getTransactionDetailDialog(element);
-          if(transactionDetailDialogNode !== null) {
-            console.log("Transaction Detail Dialog has been removedid =" + transactionDetailDialogNode.id + " node: " + transactionDetailDialogNode.cloneNode(false).outerHTML);
-            this.activeTransactionModel = null;
+          if(element.nodeType === Node.ELEMENT_NODE) {
+            this.cleanupRemovedInputs(element);
           }
         });
       }
     }
   }
 
-  getTransactionDetailDialog (item){
-    if(item)
-    {
-      //console.log(typeof item);
-      try{
-          let TransactionDetailPage = item.querySelector('[sharedcomponentid="TRANSACTION_DETAILS_DIALOG"]');
-          if (TransactionDetailPage)
-          {
-              return TransactionDetailPage;
-          }
-      }catch(error){
-          console.error("An error occurred:", error.message);
+  scanForInputs(rootElement){
+    const inputInfos = InputDiscovery.findAllNumericInputs(rootElement);
+    for(let i = 0; i < inputInfos.length; i++) {
+      const inputInfo = inputInfos[i];
+      const inputElement = inputInfo.inputElement;
+      
+      if(!this.checkIfCalculatorExists(inputElement)){
+        console.log("Numeric Input Detected via " + inputInfo.detectionMethod + " - input: " + inputElement.cloneNode(false).outerHTML);
+        this.createCalculator(inputElement);
       }
     }
-    else
-    {
-      console.log("items is nothing" );
+  }
+
+  cleanupRemovedInputs(rootElement){
+    const inputsToRemove = [];
+    
+    for(let [key, calculator] of this.calculatorMap.entries()){
+      if(!document.body.contains(calculator.simplifiInputNode)){
+        inputsToRemove.push(key);
+      }
     }
-    return null;
+    
+    for(let key of inputsToRemove){
+      const calculator = this.calculatorMap.get(key);
+      console.log("Removing calculator for input: " + key);
+      calculator.destory();
+      this.calculatorMap.delete(key);
+    }
+  }
+
+  createCalculator(inputElement){
+    const currentCalc = new Calculator(null, inputElement, this);
+    this.calculatorMap.set(currentCalc.inputElementID, currentCalc);
+  }
+
+  checkIfCalculatorExists(inputElement){
+    const id = InputDiscovery.generateInputKey(inputElement);
+    return this.calculatorMap.has(id);
   }
 
   constructor(){
     this.targetNode = document.body;
-    this.setupTransactionObserver();
-    this.activeTransactionModel = null;
+    this.calculatorMap = new Map();
+    this.setupDocumentObserver();
+    
+    requestAnimationFrame(() => {
+      this.scanForInputs(document.body);
+    });
   }
 }
+
 ;// CONCATENATED MODULE: ./src/index.js
 
 
