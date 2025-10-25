@@ -1,61 +1,80 @@
-
-import {TransactionModel} from './transactionModel';
+import {Calculator} from './calculator';
+import {InputDiscovery} from './inputDiscovery';
 
 export class PowerToolApps{
  
-  setupTransactionObserver(){
-    this.config = { attributes: false, childList: true, subtree: false };
-    this.observer = new MutationObserver((mutationList, observer) => this.bodyMutationCallback(mutationList, observer));
+  setupDocumentObserver(){
+    this.config = { attributes: false, childList: true, subtree: true };
+    this.observer = new MutationObserver((mutationList, observer) => this.documentMutationCallback(mutationList, observer));
     this.observer.observe(this.targetNode, this.config);
   }
 
-  bodyMutationCallback(mutationList, observer){
+  documentMutationCallback(mutationList, observer){
     for (const mutation of mutationList) {
       if(mutation.addedNodes.length > 0){
         mutation.addedNodes.forEach( (element) => {
-          let transactionDetailDialogNode = this.getTransactionDetailDialog(element);
-          if( transactionDetailDialogNode !== null){
-            console.log("Transaction Detail Dialog Detected id =" + transactionDetailDialogNode.id + "  node: " + transactionDetailDialogNode.cloneNode(false).outerHTML);
-            this.activeTransactionModel = new TransactionModel (transactionDetailDialogNode,this);
+          if(element.nodeType === Node.ELEMENT_NODE) {
+            this.scanForInputs(element);
           }
         })
       }
       if(mutation.removedNodes.length > 0){
         mutation.removedNodes.forEach((element) => {
-          let transactionDetailDialogNode = this.getTransactionDetailDialog(element);
-          if(transactionDetailDialogNode !== null) {
-            console.log("Transaction Detail Dialog has been removedid =" + transactionDetailDialogNode.id + " node: " + transactionDetailDialogNode.cloneNode(false).outerHTML);
-            this.activeTransactionModel = null;
+          if(element.nodeType === Node.ELEMENT_NODE) {
+            this.cleanupRemovedInputs(element);
           }
         });
       }
     }
   }
 
-  getTransactionDetailDialog (item){
-    if(item)
-    {
-      //console.log(typeof item);
-      try{
-          let TransactionDetailPage = item.querySelector('[sharedcomponentid="TRANSACTION_DETAILS_DIALOG"]');
-          if (TransactionDetailPage)
-          {
-              return TransactionDetailPage;
-          }
-      }catch(error){
-          console.error("An error occurred:", error.message);
+  scanForInputs(rootElement){
+    const inputInfos = InputDiscovery.findAllNumericInputs(rootElement);
+    for(let i = 0; i < inputInfos.length; i++) {
+      const inputInfo = inputInfos[i];
+      const inputElement = inputInfo.inputElement;
+      
+      if(!this.checkIfCalculatorExists(inputElement)){
+        console.log("Numeric Input Detected via " + inputInfo.detectionMethod + " - input: " + inputElement.cloneNode(false).outerHTML);
+        this.createCalculator(inputElement);
       }
     }
-    else
-    {
-      console.log("items is nothing" );
+  }
+
+  cleanupRemovedInputs(rootElement){
+    const inputsToRemove = [];
+    
+    for(let [key, calculator] of this.calculatorMap.entries()){
+      if(!document.body.contains(calculator.simplifiInputNode)){
+        inputsToRemove.push(key);
+      }
     }
-    return null;
+    
+    for(let key of inputsToRemove){
+      const calculator = this.calculatorMap.get(key);
+      console.log("Removing calculator for input: " + key);
+      calculator.destory();
+      this.calculatorMap.delete(key);
+    }
+  }
+
+  createCalculator(inputElement){
+    const currentCalc = new Calculator(null, inputElement, this);
+    this.calculatorMap.set(currentCalc.inputElementID, currentCalc);
+  }
+
+  checkIfCalculatorExists(inputElement){
+    const id = InputDiscovery.generateInputKey(inputElement);
+    return this.calculatorMap.has(id);
   }
 
   constructor(){
     this.targetNode = document.body;
-    this.setupTransactionObserver();
-    this.activeTransactionModel = null;
+    this.calculatorMap = new Map();
+    this.setupDocumentObserver();
+    
+    requestAnimationFrame(() => {
+      this.scanForInputs(document.body);
+    });
   }
 }
