@@ -146,23 +146,7 @@ export class Calculator {
           return value;
         }
       }else if (this.originalCalcDirection === ""){
-        if(value > 0 ){
-          return value;
-        }else if ( value < 0){
-          let userInput = prompt("Is this an Expense Category? (yes/no)").toLowerCase();
-          if(userInput ==="yes"){
-            console.log('value before sign flip: ' + value);
-            value = value * -1; // remove negative sign
-            console.log('value before sign append: ' + value);
-            value = '+' + value; // add positive sign
-            console.log('value after sign append: ' + value);
-            return value;
-          }else{
-            return value;
-          }
-        }else {
-          return value;
-        }
+        return value; // Simply return the calculated value with its sign
       }
     }
   
@@ -257,6 +241,55 @@ export class Calculator {
   
     buildCalcNodeAndAttachListeners(){
       //console.log("Input Text Found id =" + this.simplifiInputNode.id + "  node: " + this.simplifiInputNode.cloneNode(false).outerHTML);
+      
+      this.signToggleContainer = document.createElement("div");
+      this.signToggleContainer.style.display = 'flex';
+      this.signToggleContainer.style.flexDirection = 'column';
+      this.signToggleContainer.style.marginRight = '4px';
+      
+      this.plusButton = document.createElement("button");
+      this.plusButton.textContent = '+';
+      this.plusButton.style.width = '1em';
+      this.plusButton.style.height = '1em';
+      this.plusButton.style.fontSize = '0.8em';
+      this.plusButton.style.padding = '0';
+      this.plusButton.style.margin = '0';
+      this.plusButton.style.border = '1px solid #ccc';
+      this.plusButton.style.backgroundColor = '#000000';
+      this.plusButton.style.cursor = 'pointer';
+      this.plusButton.style.borderRadius = '2px';
+      this.plusButton.addEventListener('click', () => {
+        let value = this.simplifiInputNode.value;
+        if (value.startsWith('+') || value.startsWith('-')) {
+          value = value.slice(1);
+        }
+        this.simplifiInputNode.value = '+' + value;
+        this.simplifiInputNode.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      
+      this.minusButton = document.createElement("button");
+      this.minusButton.textContent = '-';
+      this.minusButton.style.width = '1em';
+      this.minusButton.style.height = '1em';
+      this.minusButton.style.fontSize = '0.8em';
+      this.minusButton.style.padding = '0';
+      this.minusButton.style.margin = '0';
+      this.minusButton.style.border = '1px solid #ccc';
+      this.minusButton.style.backgroundColor = '#000000';
+      this.minusButton.style.cursor = 'pointer';
+      this.minusButton.style.borderRadius = '2px';
+      this.minusButton.addEventListener('click', () => {
+        let value = this.simplifiInputNode.value;
+        if (value.startsWith('+') || value.startsWith('-')) {
+          value = value.slice(1);
+        }
+        this.simplifiInputNode.value = '-' + value;
+        this.simplifiInputNode.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      
+      this.signToggleContainer.appendChild(this.plusButton);
+      this.signToggleContainer.appendChild(this.minusButton);
+      
       this.powerToolActivateCalcButtonContainer = document.createElement("div");
       this.powerToolActivateCalcButtonContainer.style.display ='flex';
       this.powerToolActivateCalcButton = document.createElement("button");
@@ -282,6 +315,7 @@ export class Calculator {
       this.powerToolCalcInputNode.setAttribute("associated-amount:", this.inputElementID);
   
       // must append after cloning
+      this.simplifiInputDiv.appendChild(this.signToggleContainer);
       this.simplifiInputDiv.appendChild(this.powerToolActivateCalcButtonContainer);
      
   
@@ -331,6 +365,7 @@ export class Calculator {
         this.simplifiInputNode.removeEventListener('focus', this.simplifiInputNodefocusHandler)
         this.powerToolCalcContainerNode.parentNode.removeChild(this.powerToolCalcContainerNode); // remove Powertool
         this.powerToolActivateCalcButtonContainer.parentNode.removeChild(this.powerToolActivateCalcButtonContainer); // remove calc icon
+        this.signToggleContainer.parentNode.removeChild(this.signToggleContainer); // remove sign toggle buttons
       }
   
       constructor(transactionModel, inputElement, parent) {
