@@ -1,5 +1,5 @@
 import {InputDiscovery} from './inputDiscovery';
-import {DoMath} from './math';
+import {DoMath, convertToRPN, validateRPN} from './math';
 import './style.css';
 
 const CalcButtonPrefix = "PowerToolsCalcButton-";
@@ -57,7 +57,13 @@ export class Calculator {
   
       if(OperatorKeys.test(lastChar))
       {
-        inputBox.value = inputValue.slice(0,-1) + '\n' + lastChar;
+        const beforeOperator = inputValue.slice(0, -1);
+        const lines = beforeOperator.split('\n');
+        const currentLine = lines[lines.length - 1];
+        
+        if(currentLine.trim().length > 0) {
+          inputBox.value = beforeOperator + '\n' + lastChar;
+        }
       }
   
     }
@@ -72,21 +78,23 @@ export class Calculator {
       }
     }
   
-    manageEnter(inputBox){
-      let inputValue = inputBox.value;
-      let lastChar = inputValue.slice(-1);
-      if(lastChar === '\n'){
-        this.runCalculator();
-      }
-    }
-  
     inputChangeHandler(event){
+      this.clearValidationError(event.target);
       this.ManageRowLines(event.target);
-      this.manageEnter(event.target);
       this.manageTextAreaExpansion(event.target);
     }
   
     keyDownHandler (event){
+      if(event.key === 'Enter'){
+        event.preventDefault();
+        if(this.validateExpression(event.target.value)) {
+          this.runCalculator();
+        } else {
+          this.showValidationError(event.target);
+        }
+        return;
+      }
+      
       if(!this.checkAllowedValues(event.key)){
         event.preventDefault();
       }
@@ -224,8 +232,44 @@ export class Calculator {
       const cleanValue = value.trim().replace(/^[+\-]/, '');
       return cleanValue === '' || parseFloat(cleanValue) === 0;
     }
+
+    validateExpression(expression) {
+      try {
+        let cleanedExpression = this.cleanValue(expression);
+        
+        if(cleanedExpression.startsWith('+')) {
+          cleanedExpression = cleanedExpression.slice(1);
+        }
+        
+        const rpn = convertToRPN(cleanedExpression);
+        if (!validateRPN(rpn)) {
+          console.log("Validation failed: invalid RPN structure");
+          return false;
+        }
+        
+        return true;
+      } catch(exception) {
+        console.log("Validation failed: " + exception.message);
+        return false;
+      }
+    }
+
+    showValidationError(inputBox) {
+      inputBox.classList.add('validation-error');
+      
+      inputBox.classList.add('shimmer-animation');
+      
+      setTimeout(() => {
+        inputBox.classList.remove('shimmer-animation');
+      }, 1000);
+    }
+
+    clearValidationError(inputBox) {
+      inputBox.classList.remove('validation-error');
+      inputBox.classList.remove('shimmer-animation');
+    }
   
-    powerToolInputNodelossFocusHandler(event) { 
+    powerToolInputNodelossFocusHandler(event) {
     if(event.relatedTarget === null || !event.relatedTarget.hasAttribute("id") || (event.relatedTarget.id !=='dlg-close')){
       requestAnimationFrame(() => {
         this.runCalculator();

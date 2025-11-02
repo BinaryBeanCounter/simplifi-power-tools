@@ -9,3 +9,18 @@
     border: none;
     outline: none;
 }
+
+.validation-error {
+  color: #ff0000 !important;
+}
+
+@keyframes shimmer {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(10px); }
+  50% { transform: translateX(0); }
+  75% { transform: translateX(-10px); }
+}
+
+.shimmer-animation {
+  animation: shimmer 0.15s ease-in-out 3;
+}
