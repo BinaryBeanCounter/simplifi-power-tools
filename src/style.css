@@ -22,5 +22,5 @@
 }
 
 .shimmer-animation {
-  animation: shimmer 0.33s ease-in-out 3;
+  animation: shimmer 0.15s ease-in-out 3;
 }
