@@ -106,7 +106,12 @@ export class Calculator {
     simplifiInputNodefocusHandler = (event) => {
   
       this.showPowerToolInputBox();
-      this.powerToolCalcInputNode.value = this.simplifiInputNode.value;
+      
+      const currentValue = this.simplifiInputNode.value;
+      const isZero = this.isValueZero(currentValue);
+      
+      this.powerToolCalcInputNode.value = isZero ? '' : currentValue;
+      
       this.hideSimplifiInputBox();
       this.setFocusOnPowerToolBox();
     }
@@ -213,6 +218,11 @@ export class Calculator {
   
     cleanValue(expression){
       return expression.replace(/[\n\r,]/g,"");
+    }
+
+    isValueZero(value) {
+      const cleanValue = value.trim().replace(/^[+\-]/, '');
+      return cleanValue === '' || parseFloat(cleanValue) === 0;
     }
   
     powerToolInputNodelossFocusHandler(event) { 
