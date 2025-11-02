@@ -72,26 +72,23 @@ export class Calculator {
       }
     }
   
-    manageEnter(inputBox){
-      let inputValue = inputBox.value;
-      let lastChar = inputValue.slice(-1);
-      if(lastChar === '\n'){
-        if(this.validateExpression(inputValue)) {
-          this.runCalculator();
-        } else {
-          this.showValidationError(inputBox);
-        }
-      }
-    }
-  
     inputChangeHandler(event){
       this.clearValidationError(event.target);
       this.ManageRowLines(event.target);
-      this.manageEnter(event.target);
       this.manageTextAreaExpansion(event.target);
     }
   
     keyDownHandler (event){
+      if(event.key === 'Enter'){
+        event.preventDefault();
+        if(this.validateExpression(event.target.value)) {
+          this.runCalculator();
+        } else {
+          this.showValidationError(event.target);
+        }
+        return;
+      }
+      
       if(!this.checkAllowedValues(event.key)){
         event.preventDefault();
       }
