@@ -57,7 +57,13 @@ export class Calculator {
   
       if(OperatorKeys.test(lastChar))
       {
-        inputBox.value = inputValue.slice(0,-1) + '\n' + lastChar;
+        const beforeOperator = inputValue.slice(0, -1);
+        const lines = beforeOperator.split('\n');
+        const currentLine = lines[lines.length - 1];
+        
+        if(currentLine.trim().length > 0) {
+          inputBox.value = beforeOperator + '\n' + lastChar;
+        }
       }
   
     }
