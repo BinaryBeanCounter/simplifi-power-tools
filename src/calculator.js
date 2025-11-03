@@ -91,7 +91,7 @@ export class Calculator {
         let value = event.target.value.trim();
         if(event.key === 'Tab'){ // on Tab if the field is blank or + or - then just set hte value to 0 and blur away and return else move on for enter
              if(value === '' || value === '+' || value === '-'){
-                 event.target.value = '0';  
+                 event.target.value = '0.00';  
                  event.target.blur();
              }
         }
