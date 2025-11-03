@@ -89,15 +89,17 @@ export class Calculator {
       if(event.key === 'Enter' || event.key === 'Tab'){
         event.preventDefault();
         let value = event.target.value.trim();
-        if(event.key === 'Tab'){ // on Tab if the field is blank or + or - then just set hte value to 0 and blur away and return else move on for enter
+        if(event.key === 'Tab'){ // on Tab if the field is blank or + or - then just set the value to 0 and let the rest of the calculation run but only on tab
              if(value === '' || value === '+' || value === '-'){
                  event.target.value = '0.00';  
-                 event.target.blur();
              }
         }
 
         if(this.validateExpression(event.target.value)) {
           this.runCalculator();
+          if(event.key === 'Tab'){ // if tab then blur away
+            event.target.blur();
+          }
         } else {
           this.showValidationError(event.target);
         }
