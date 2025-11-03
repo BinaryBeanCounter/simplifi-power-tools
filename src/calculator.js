@@ -90,6 +90,11 @@ export class Calculator {
         if(this.validateExpression(event.target.value)) {
           this.runCalculator();
             if(event.key === 'Tab'){
+                let value = event.target.value.trim();
+                if(value === '' || value === '+' || value === '-') {  
+                    event.target.value = '0';  
+                    value = '0';  
+                }  
                 event.target.blur();
             }
         } else {
