@@ -85,10 +85,21 @@ export class Calculator {
     }
   
     keyDownHandler (event){
-      if(event.key === 'Enter'){
+        
+      if(event.key === 'Enter' || event.key === 'Tab'){
         event.preventDefault();
+        let value = event.target.value.trim();
+        if(event.key === 'Tab'){ // on Tab if the field is blank or + or - then just set the value to 0 and let the rest of the calculation run but only on tab
+             if(value === '' || value === '+' || value === '-'){
+                 event.target.value = '0.00';  
+             }
+        }
+
         if(this.validateExpression(event.target.value)) {
           this.runCalculator();
+          if(event.key === 'Tab'){ // if tab then blur away
+            event.target.blur();
+          }
         } else {
           this.showValidationError(event.target);
         }
@@ -102,7 +113,7 @@ export class Calculator {
   
     checkAllowedValues(inputvalue){
       let allowedKeysPattern = /^[0-9\+\-\/*.]$/;
-      if(allowedKeysPattern.test(inputvalue) || inputvalue ==='Enter' || inputvalue === 'Backspace' || inputvalue === 'Delete' || inputvalue === 'ArrowLeft' || inputvalue === 'ArrowRight' ){
+      if(allowedKeysPattern.test(inputvalue) || inputvalue === 'Backspace' || inputvalue === 'Delete' || inputvalue === 'ArrowLeft' || inputvalue === 'ArrowRight' ){
         return true;
       }
       return false;
