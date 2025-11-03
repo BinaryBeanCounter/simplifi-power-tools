@@ -204,35 +204,47 @@ export class Calculator {
         // 1) did we just enable the calculator and simplify passed us this (+ or -)
         // 2) did we change calc directions while doing some math (-)
         // for + the only way we get this is if simplifi passes it to us but for - we could calc into this 
-    runCalculator(){
-      let returnvalue = 0;
-      let startingDirection = '';
-      try{
-        let calcutionString = this.powerToolCalcInputNode.value;
-
-        if(calcutionString.startsWith('+') ){
-          startingDirection =  '+';
-          calcutionString = calcutionString.slice(1); // for + slice it off we will put it back
-        } else if(calcutionString.startsWith('-')){
-          startingDirection =  '+';
-          // no need to strip negatives calculator will handle it
-        }
-        console.log('Calc String: ' + calcutionString);
-        let cleanedCalcString = this.cleanValue(calcutionString);
-        console.log('Clean Calc String: ' + cleanedCalcString);
-        let calcValue = DoMath(cleanedCalcString);
-        console.log('Calc Value: ' + calcValue);
-        let roundedValue = parseFloat(calcValue.toFixed(6));
-        console.log('Rounded Value: ' + roundedValue);
-        returnvalue = roundedValue
-        let signedValue = this.getCalcTimeDirectionIndicator(returnvalue, startingDirection) + returnvalue
-        console.log('Signed Value : ' + signedValue);
-        returnvalue = signedValue;
-      }catch(exception){
-        returnvalue = this.powerToolCalcInputNode.value
-        console.log("error Calculating: " + this.powerToolCalcInputNode.value + " error message " + exception.message);
-      } 
-      this.powerToolCalcInputNode.value = returnvalue;
+   runCalculator(){  
+      let returnvalue = 0;  
+      let startingDirection = '';  
+      try{  
+        let calcutionString = this.powerToolCalcInputNode.value;  
+      
+        if(calcutionString.startsWith('+') ){  
+          startingDirection =  '+';  
+          calcutionString = calcutionString.slice(1);  
+        } else if(calcutionString.startsWith('-')){  
+          startingDirection =  '+';  
+        }  
+        console.log('Calc String: ' + calcutionString);  
+        let cleanedCalcString = this.cleanValue(calcutionString);  
+        console.log('Clean Calc String: ' + cleanedCalcString);  
+        let calcValue = DoMath(cleanedCalcString);  
+        console.log('Calc Value: ' + calcValue);  
+          
+        // First, limit to 6 decimal places maximum  
+        let numericValue = parseFloat(calcValue.toFixed(6));  
+        let valueStr = numericValue.toString();  
+        let decimalPlaces = (valueStr.split('.')[1] || '').length;  
+          
+        // If less than 2 decimal places, format to exactly 2  
+        if(decimalPlaces < 2) {  
+          valueStr = numericValue.toFixed(2);  
+        }  
+          
+        console.log('Formatted Value: ' + valueStr);  
+          
+        // Get direction indicator  
+        let directionIndicator = this.getCalcTimeDirectionIndicator(numericValue, startingDirection);  
+          
+        // Combine direction indicator with value string  
+        returnvalue = directionIndicator + valueStr;  
+        console.log('Signed Value : ' + returnvalue);  
+      }catch(exception){  
+        returnvalue = this.powerToolCalcInputNode.value  
+        console.log("error Calculating: " + this.powerToolCalcInputNode.value + " error message " + exception.message);  
+      }   
+      this.powerToolCalcInputNode.value = returnvalue;  
     }
   
     cleanValue(expression){
