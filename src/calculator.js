@@ -222,18 +222,17 @@ export class Calculator {
         let calcValue = DoMath(cleanedCalcString);  
         console.log('Calc Value: ' + calcValue);  
           
-        // Check decimal places and format accordingly  
-        let numericValue = calcValue;  
+        // First, limit to 6 decimal places maximum  
+        let numericValue = parseFloat(calcValue.toFixed(6));  
         let valueStr = numericValue.toString();  
         let decimalPlaces = (valueStr.split('.')[1] || '').length;  
           
-        // Only apply toFixed(2) if less than 2 decimal places  
+        // If less than 2 decimal places, format to exactly 2  
         if(decimalPlaces < 2) {  
-          numericValue = parseFloat(numericValue.toFixed(2));  
           valueStr = numericValue.toFixed(2);  
         }  
           
-        console.log('Numeric Value: ' + numericValue);  
+        console.log('Formatted Value: ' + valueStr);  
           
         // Get direction indicator  
         let directionIndicator = this.getCalcTimeDirectionIndicator(numericValue, startingDirection);  
