@@ -6,7 +6,7 @@ simplifi-power-tools is a chrome extension for the Simplifi Personal Finance Too
 
 A basic calculator that is added to each of the fields in the split screen.
 
-![Demo of power tool calculator working](/demo/PowerToolDemo.gif)
+![Demo of power tool calculator working](/demo/SimplifiPowerToolDemo.gif)
 
 ## Installation
 
