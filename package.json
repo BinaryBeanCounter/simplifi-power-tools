@@ -1,6 +1,6 @@
 {
   "name": "simplifi-power-tools",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "simplifi-power-tools is a chrome extension for the Simplifi Personal Finance Tool.",
   "main": "index.js",
   "scripts": {

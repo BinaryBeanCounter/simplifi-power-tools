@@ -6,6 +6,7 @@ const isAnalyze = process.env.ANALYZE === 'true';
 
 module.exports = {
   mode: 'production', // or 'production' or 'development'
+  devtool: false,
   entry: './src/index.js', // the entry point of your app
   output: {
     filename: 'bundle.js', // the output bundle

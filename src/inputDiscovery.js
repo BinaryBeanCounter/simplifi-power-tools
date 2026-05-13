@@ -4,9 +4,14 @@ export class InputDiscovery {
     if (!inputElement || inputElement.tagName !== 'INPUT') {
       return false;
     }
+
+    // EXCLUDE search inputs first
+    const placeholder = inputElement.placeholder || '';
+    if (placeholder.toLowerCase().includes('search')) {
+      return false;
+    }
     
     const value = inputElement.value || '';
-    const placeholder = inputElement.placeholder || '';
     
     const currencyPattern = /^[+\-]?\$?\d*\.?\d*$/;
     
